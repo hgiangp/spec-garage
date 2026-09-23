@@ -67,3 +67,26 @@ def test_cli_profile(capsys):
     out = capsys.readouterr().out
     assert "split simulation" in out
     assert "8888ZXXXXC000_E_(Other)_250101.docx" in out
+
+
+def test_edge_cases(tmp_path):
+    md = tmp_path / "edge.md"
+    md.write_text(
+        "# Title with closing ##\n"
+        "####### seven hashes is text\n"
+        "#hashtag is text\n"
+        "## IGN_ON Handling\n"
+        "````\n"
+        "```\n"
+        "# still code\n"
+        "````\n"
+        "## After Code\n"
+        "Note[^1] and [s](file:///C:/Specs/7821ZXXXXF000_E_(LIN%20COMM)_250620.docx#_Ref1).\n"
+        "[^1]: A footnote, not a link\n",
+        encoding="utf-8",
+    )
+    doc = parse_file(md)
+    assert [h.title for h in doc.headings] == ["Title with closing", "IGN_ON Handling", "After Code"]
+    assert [(l.kind, l.file_part, l.anchor) for l in doc.links] == [
+        ("cross_file", "C:/Specs/7821ZXXXXF000_E_(LIN COMM)_250620.docx", "_Ref1"),
+    ]

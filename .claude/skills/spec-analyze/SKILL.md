@@ -24,7 +24,7 @@ Một trong:
    - Chưa có vault: theo các link `#_Ref…` / `#_Toc…` trong section, tìm anchor tương ứng bằng grep.
    - Đọc các section đó ở mức đủ để kiểm tra nhất quán, không phân tích sâu.
 4. **Kiểm tra** từng requirement theo Q1–Q8 và toàn section theo S1–S7 trong checklist.
-5. **Ghi report** vào `reports/analyze/<ID hoặc CODE-line>.md` theo format dưới đây.
+5. **Ghi report** vào `reports/analyze/<ID>.md` (có vault) hoặc `reports/analyze/<CODE>-L<start>-L<end>.md` (chưa có vault, ví dụ `WRN-L120-L245.md`) theo format dưới đây.
 
 ## Format report
 

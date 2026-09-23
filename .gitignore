@@ -14,3 +14,19 @@ vault/.trash/
 
 # OS
 .DS_Store
+
+# ── PUBLIC-REPO GUARD ────────────────────────────────────────────────────────────
+# The GitHub remote is currently PUBLIC. Everything derived from real specs stays local.
+# Remove this block only after the remote is private / internal (see docs/next-steps.md §0).
+sources/*/*
+!sources/*/.gitkeep
+vault/*/
+!vault/.obsidian/
+!vault/attachments/
+vault/attachments/*
+!vault/attachments/.gitkeep
+reports/*
+!reports/README.md
+evals/skills/*/
+evals/qa/*
+!evals/qa/.gitkeep

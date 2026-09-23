@@ -16,8 +16,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import unquote
 
-FENCE_RE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
-ATX_RE = re.compile(r"^\s{0,3}(#{1,6})(?:[ \t]+(.*?))?[ \t]*#*[ \t]*$")
+FENCE_RE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
+ATX_RE = re.compile(r"^\s{0,3}(#{1,6})(?:[ \t]+(.*))?$")
+ATX_CLOSE_RE = re.compile(r"(?:^|[ \t]+)#+[ \t]*$")
 SETEXT_RE = re.compile(r"^\s{0,3}(=+|-+)\s*$")
 
 ATTR_ID_RE = re.compile(r"\{[^{}\n]*?#([A-Za-z_][\w.:-]*)[^{}\n]*\}")
@@ -28,7 +29,7 @@ HTML_ID_RE = re.compile(r"<(?:a|span|div)\b[^>]*?\b(?:id|name)\s*=\s*[\"']([^\"'
 _DEST = r"\(\s*(?:<([^>\n]+)>|((?:[^()\s]|\([^()\s]*\))+))(?:\s+\"[^\"]*\")?\s*\)"
 MD_LINK_RE = re.compile(r"(?<!!)\[(?:[^\[\]]|\[[^\]]*\])*\]" + _DEST)
 HTML_LINK_RE = re.compile(r"<a\b[^>]*?\bhref\s*=\s*[\"']([^\"']+)[\"']", re.I)
-REF_DEF_RE = re.compile(r"^\s{0,3}\[([^\]]+)\]:\s*<?(\S+?)>?(?:\s+.*)?$")
+REF_DEF_RE = re.compile(r"^\s{0,3}\[(?!\^)([^\]]+)\]:\s*<?(\S+?)>?(?:\s+.*)?$")
 
 MD_IMG_RE = re.compile(r"!\[[^\]]*\]" + _DEST)
 HTML_IMG_RE = re.compile(r"<img\b[^>]*?\bsrc\s*=\s*[\"']([^\"']+)[\"']", re.I)
@@ -104,7 +105,8 @@ def clean_title(raw: str) -> str:
     text = ATTR_ID_RE.sub("", text)
     text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"<[^>]+>", "", text)
-    text = re.sub(r"[*_`]{1,3}", "", text)
+    text = re.sub(r"[*`]+", "", text)
+    text = re.sub(r"(?<!\w)_{1,2}([^_]+?)_{1,2}(?!\w)", r"\1", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
@@ -112,7 +114,9 @@ def classify_link(target: str) -> tuple[str, str | None, str | None]:
     target = target.strip()
     if target.startswith("#"):
         return "internal", None, unquote(target[1:]) or None
-    if re.match(r"^[a-z][a-z0-9+.-]*:", target, re.I) and not re.match(r"^[a-z]:[\\/]", target, re.I):
+    if target.lower().startswith("file:"):
+        target = re.sub(r"^file:/*", "", target, flags=re.I)
+    elif re.match(r"^[a-z][a-z0-9+.-]*:", target, re.I) and not re.match(r"^[a-z]:[\\/]", target, re.I):
         return ("external" if target.lower().startswith(("http", "mailto", "ftp")) else "other"), None, None
     file_part, _, anchor = target.partition("#")
     file_part = unquote(file_part)
@@ -133,25 +137,25 @@ def parse_file(path: Path) -> Document:
     tables = {"pipe": 0, "grid": 0, "html": 0}
     setext_suspects = 0
 
-    in_fence: str | None = None
+    in_fence: str | None = None  # opening fence run, e.g. "```"
     prev_grid = False
     current: int | None = None
 
     for i, line in enumerate(lines, start=1):
         fence = FENCE_RE.match(line)
-        if fence:
-            marker = fence.group(1)[0]
-            if in_fence is None:
-                in_fence = marker
-            elif in_fence == marker:
+        if in_fence is None:
+            if fence:
+                in_fence = fence.group(1)
+                continue
+        else:
+            run = fence.group(1) if fence else ""
+            if run[:1] == in_fence[0] and len(run) >= len(in_fence) and not fence.group(2).strip():
                 in_fence = None
-            continue
-        if in_fence:
             continue
 
         m = ATX_RE.match(line)
         if m:
-            raw = (m.group(2) or "").strip()
+            raw = ATX_CLOSE_RE.sub("", (m.group(2) or "").strip())
             title = clean_title(raw)
             num = NUMBER_RE.match(title)
             current = len(headings)

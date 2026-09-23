@@ -1,6 +1,6 @@
 # Spec Garage
 
-Repo để ingest và improve spec automotive (Word → Markdown + ảnh). Thiết kế và các quyết định (D1–D13): `docs/spec-pipeline-design.md`.
+Repo để ingest và improve spec automotive (Word → Markdown + ảnh). Thiết kế và các quyết định (D1–D13): `docs/spec-pipeline-design.md`. Việc cần làm tiếp và đặc tả Phase 1: `docs/next-steps.md`.
 
 **Giai đoạn hiện tại:** Phase 0 (profile dữ liệu) → Phase 1 (vault) → Phase 2 (skills improve). RAG/chatbot để sau.
 
@@ -8,6 +8,10 @@ Repo để ingest và improve spec automotive (Word → Markdown + ảnh). Thi�
 
 - Spec là tài liệu mật. Claude Code được phép đọc và sửa spec trong repo này.
 - **Không** đưa nội dung spec vào dịch vụ bên ngoài khác (web search, WebFetch, API bên thứ ba, artifact công khai).
+- **Remote GitHub hiện đang PUBLIC.** `.gitignore` có khối *PUBLIC-REPO GUARD* chặn `sources/`, `vault/<CODE>/`, `vault/attachments/`, `reports/`, `evals/`.
+  - Không gỡ khối này và không dùng `git add -f` cho các đường dẫn đó.
+  - `knowledge/` không bị chặn: **không commit nội dung domain** (glossary, lessons, ví dụ trích từ spec) khi repo còn public.
+  - Chỉ gỡ guard sau khi remote đã chuyển sang private hoặc nội bộ.
 
 ## Cấu trúc
 
