@@ -11,7 +11,7 @@ Chỉ **báo cáo**.
 
 ## Quy trình
 
-1. **Nạp tri thức:** đọc `knowledge/glossary.md`, `knowledge/lessons.md`.
+1. **Nạp tri thức:** đọc `data/knowledge/glossary.md`, `data/knowledge/lessons.md`.
 2. **Lấy dữ liệu:**
    - `sg get <ID>`
    - `sg related <ID>`: cả chiều ra (section này refer tới) và chiều vào (section khác refer tới nó), kể cả spec khác.
@@ -21,7 +21,7 @@ Chỉ **báo cáo**.
    - Cùng parameter nhưng khác giá trị.
    - Điều kiện chồng lấn hoặc mâu thuẫn.
    - Link trỏ tới section không nói về nội dung được nhắc.
-5. **Ghi report** vào `reports/consistency/<ID>.md`. Dùng cùng format bảng Issues như `spec-analyze`, và mỗi issue ghi **cả hai vị trí**.
+5. **Ghi report** vào `data/reports/consistency/<ID>.md`. Dùng cùng format bảng Issues như `spec-analyze`, và mỗi issue ghi **cả hai vị trí**.
 
 ## Quy tắc
 - **Không kết luận bên nào đúng.** Nêu mâu thuẫn và hỏi expert.

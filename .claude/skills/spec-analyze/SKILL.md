@@ -11,11 +11,11 @@ Chỉ **báo cáo**, không sửa spec. Output là một file report để exper
 
 Một trong:
 - **Section ID** (`WRN-0342`), sau khi đã có vault.
-- **File + heading** trong `sources/`, trước khi có vault. Xác định khoảng dòng của section bằng `grep -n '^#' <file>` rồi đọc đúng khoảng đó.
+- **File + heading** trong `data/sources/`, trước khi có vault. Xác định khoảng dòng của section bằng `grep -n '^#' <file>` rồi đọc đúng khoảng đó.
 
 ## Quy trình
 
-1. **Nạp tri thức:** đọc `knowledge/quality-checklist.md`, `knowledge/style-guide.md`, `knowledge/glossary.md` và `knowledge/lessons.md`.
+1. **Nạp tri thức:** đọc `knowledge/quality-checklist.md`, `knowledge/style-guide.md`, `data/knowledge/glossary.md` và `data/knowledge/lessons.md`.
 2. **Lấy section:**
    - Có vault: `sg get <ID>` (Phase 1).
    - Chưa có vault: đọc khoảng dòng của section kèm heading cha để biết ngữ cảnh.
@@ -24,13 +24,13 @@ Một trong:
    - Chưa có vault: theo các link `#_Ref…` / `#_Toc…` trong section, tìm anchor tương ứng bằng grep.
    - Đọc các section đó ở mức đủ để kiểm tra nhất quán, không phân tích sâu.
 4. **Kiểm tra** từng requirement theo Q1–Q8 và toàn section theo S1–S7 trong checklist.
-5. **Ghi report** vào `reports/analyze/<ID>.md` (có vault) hoặc `reports/analyze/<CODE>-L<start>-L<end>.md` (chưa có vault, ví dụ `WRN-L120-L245.md`) theo format dưới đây.
+5. **Ghi report** vào `data/reports/analyze/<ID>.md` (có vault) hoặc `data/reports/analyze/<CODE>-L<start>-L<end>.md` (chưa có vault, ví dụ `WRN-L120-L245.md`) theo format dưới đây.
 
 ## Format report
 
 ```markdown
 ---
-target: WRN-0342            # hoặc sources/WRN/<file>.md#L120-L245
+target: WRN-0342            # hoặc data/sources/WRN/<file>.md#L120-L245
 related: [WRN-0120, LIN-0033]
 date: YYYY-MM-DD
 ---

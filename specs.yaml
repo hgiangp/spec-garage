@@ -2,8 +2,9 @@
 # it never changes, even when a new revision of the spec arrives with a new date in its file name.
 #
 # File name pattern: <doc_no>_<lang>_(<title>)_<yymmdd>
-#   source:  the Word→md output, copied under sources/<CODE>/ with its original name
-#   images:  the image folder that came with the conversion (fill in the real folder name)
+#   source:  the Word→md output, copied under data/sources/<CODE>/ with its original name
+#   images:  optional; the image folder that came with the conversion. Image links are resolved
+#            relative to the source .md, so this is only used by `sg specs` as a sanity check.
 
 specs:
   - code: WRN
@@ -11,15 +12,15 @@ specs:
     lang: E
     title: Warning
     date: 2026-02-20
-    source: sources/WRN/7820ZXXXXG000_E_(Warning)_260220.md
-    images: null  # TODO: sources/WRN/<image folder>
+    source: data/sources/WRN/7820ZXXXXG000_E_(Warning)_260220.md
+    images: null  # TODO: data/sources/WRN/<image folder>
 
   - code: EWA
     doc_no: 7820ZXXXXS000
     lang: E
     title: EnlargeWA
     date: 2026-02-20
-    source: sources/EWA/7820ZXXXXS000_E_(EnlargeWA)_260220.md
+    source: data/sources/EWA/7820ZXXXXS000_E_(EnlargeWA)_260220.md
     images: null  # TODO
 
   - code: LIN
@@ -27,5 +28,5 @@ specs:
     lang: E
     title: LIN COMM
     date: 2025-06-20
-    source: sources/LIN/7821ZXXXXF000_E_(LIN COMM)_250620.md
+    source: data/sources/LIN/7821ZXXXXF000_E_(LIN COMM)_250620.md
     images: null  # TODO

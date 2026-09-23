@@ -7,4 +7,4 @@
 | `consistency/<ID>.md` | skill `spec-consistency` |
 | `validate/` | `sg validate` (Phase 1) |
 
-Report gắn với PR improve tương ứng được commit cùng PR.
+Report của một lần improve được commit cùng branch improve đó (trong repo `data/`).

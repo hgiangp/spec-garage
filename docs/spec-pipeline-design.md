@@ -41,7 +41,7 @@ Giai đoạn này **ưu tiên improve trước**. Những gì cần và chưa c�
 | Resolve hyperlink thành link giữa các note (D3)                     | MCPVault (D13)                                   |
 | Script hỗ trợ:`get_section`, `related`, `validate`, `export` | Model embedding (một phần D11)                 |
 | Skills improve + guardrail + vòng review (D8, D9, D10)                |                                                  |
-| Git: mỗi lần improve là một PR hoặc commit                        |                                                  |
+| Git (repo `data/` local): mỗi lần improve là một branch            |                                                  |
 
 Mặc dù G3 để sau, D2 (Section ID) vẫn phải làm đúng ngay từ đầu. Nếu thiếu nó thì sau này không so sánh before/after được.
 
@@ -311,7 +311,7 @@ tools/ (CLI sg)           # get, related, validate, export
 ### D9: Guardrail cho improve `P0` (gần như bắt buộc)
 
 - **Không bịa giá trị.** Thiếu thông tin thì đánh dấu `> [!todo] ASSUMPTION: …` để expert điền.
-- **Không đổi ngữ nghĩa** nếu chưa được expert duyệt. Mọi thay đổi đi dưới dạng **diff/PR**.
+- **Không đổi ngữ nghĩa** nếu chưa được expert duyệt. Mọi thay đổi đi dưới dạng **branch + diff** trong repo `data/`.
 - **Giữ ID** (D2). Khi tách hoặc gộp section thì ghi `derived_from`.
 - **`validate.py` chạy sau mỗi lần sửa:** link gãy, ID trùng, bảng thiếu cột, đơn vị không chuẩn.
 - Mỗi note có `status: original | proposed | reviewed | approved` trong frontmatter.
@@ -327,7 +327,7 @@ tools/ (CLI sg)           # get, related, validate, export
 
 "Skill hoàn chỉnh" chính là bộ references đã ổn định và eval đạt ngưỡng.
 
-- [ ] Chốt người review, nhịp review, nơi ghi feedback (PR comment / file)
+- [ ] Chốt người review, nhịp review, nơi ghi feedback (commit message / `data/reports/review/`)
 
 ### D11: Model và chính sách dữ liệu `P0` ✅ Chính sách đã chốt
 
@@ -406,90 +406,69 @@ Vault giữ format tương thích Obsidian nên có thể cắm MCPVault vào b�
 
 ## 6. Cấu trúc repo
 
+**Mô hình hai máy (đã chốt):**
+- **Repo public** trên GitHub chỉ chứa code, skill, tri thức chung và tài liệu. Máy phát triển push lên đó.
+- **Máy dữ liệu** chỉ pull. Mọi thứ rút ra từ spec nằm trong `data/`: bị repo public ignore, và là **một git repo local riêng**.
+
+Chi tiết vận hành: `docs/next-steps.md` §0.
+
 ```
-spec-garage/
+spec-garage/                  # ── REPO PUBLIC ──
 ├─ README.md
-├─ CLAUDE.md                  # hướng dẫn cho agent: quy ước ID/link, guardrail D9, cách gọi tools
-├─ specs.yaml                 # registry: mã spec ↔ file nguồn, tiêu đề, phiên bản
+├─ CLAUDE.md                  # quy ước ID/link, guardrail D9, lệnh sg, chính sách dữ liệu
+├─ specs.yaml                 # registry: mã spec ↔ file nguồn (data/sources/…)
 ├─ docs/
 │  ├─ spec-pipeline-design.md # tài liệu này
-│  └─ conventions.md          # quy ước chi tiết (D2, D3), tách ra khi đã chốt
-│
-├─ sources/                   # INPUT GỐC, chỉ đọc, không sửa tay
-│  └─ WRN/
-│     ├─ brake-spec.md
-│     └─ images/
-│
-├─ vault/                     # OBSIDIAN VAULT = nguồn sự thật sau Phase 1
-│  ├─ .obsidian/              # chỉ commit config tối thiểu (xem ghi chú)
-│  ├─ WRN/
-│  │  ├─ _manifest.yaml       # cây + thứ tự + next_id + retired
-│  │  ├─ _toc.md              # sinh tự động từ manifest
-│  │  ├─ WRN-0001.md
-│  │  └─ …
-│  ├─ LIN/
-│  └─ attachments/
-│     ├─ WRN/
-│     └─ LIN/
-│
-├─ knowledge/                 # TRI THỨC DOMAIN, dùng chung cho mọi skill, expert duy trì
+│  └─ next-steps.md           # hướng dẫn triển khai, đặc tả Phase 1
+├─ knowledge/                 # TRI THỨC CHUNG (không chứa nội dung domain)
 │  ├─ style-guide.md          # shall/should, EARS, đơn vị, format bảng
 │  ├─ quality-checklist.md    # ISO/IEC/IEEE 29148
-│  ├─ glossary.md             # thuật ngữ, ECU, signal naming
-│  ├─ lessons.md              # rule rút ra từ review
 │  └─ templates/              # function, signal-table, state-machine, dtc, timing…
-│
-├─ .claude/
-│  └─ skills/                 # Claude Code tự nhận diện skill ở đây
-│     ├─ spec-analyze/SKILL.md
-│     ├─ spec-restructure/SKILL.md
-│     ├─ spec-parameterize/SKILL.md
-│     ├─ spec-consistency/SKILL.md
-│     └─ spec-diagram/SKILL.md
-│
+├─ .claude/skills/            # Claude Code tự nhận diện skill ở đây
+│  └─ spec-analyze/ spec-restructure/ spec-parameterize/ spec-consistency/ spec-diagram/
 ├─ tools/                     # Python package, CLI `sg` (chạy: uv run --project tools sg …)
-│  ├─ pyproject.toml
 │  ├─ specgarage/
-│  │  ├─ cli.py               # entry point `sg`
-│  │  ├─ config.py            # tìm gốc repo, đọc specs.yaml
-│  │  ├─ parse.py             # md → cây heading, anchor, link, ảnh, bảng   ✅
-│  │  ├─ profile.py           # Phase 0                                     ✅
-│  │  └─ (Phase 1) ids.py, build_vault.py, section.py, validate.py, export.py
-│  └─ tests/                  # fixtures/ là spec giả lập
+│  │  ├─ cli.py  config.py  parse.py  profile.py  init_data.py
+│  │  ├─ (Phase 1) ids.py, build_vault.py, section.py, validate.py, export.py
+│  │  └─ data_template/       # khung cho data/ (sg init-data)
+│  └─ tests/                  # fixtures/ là spec GIẢ LẬP
+├─ build/                     # ignore: bản export
 │
-├─ evals/
-│  ├─ skills/                 # 10–20 section mẫu: input + bản expert duyệt (D10)
-│  └─ qa/                     # bộ câu hỏi vàng (giai đoạn sau, D12)
-│
-├─ reports/                   # output của spec-analyze / validate, gắn với PR
-│
-└─ build/                     # .gitignore: bản export, index (giai đoạn sau)
+└─ data/                      # ── IGNORE bởi repo public; GIT REPO LOCAL trên máy dữ liệu ──
+   ├─ README.md  .gitignore
+   ├─ sources/<CODE>/         # spec gốc Word→md + ảnh, chỉ đọc
+   ├─ vault/                  # OBSIDIAN VAULT = nguồn sự thật sau Phase 1
+   │  ├─ .obsidian/           # config chung
+   │  ├─ WRN/                 # _manifest.yaml, _toc.md, WRN-0000.md, WRN-0001.md…
+   │  └─ attachments/WRN/
+   ├─ knowledge/              # TRI THỨC DOMAIN: glossary.md, lessons.md
+   ├─ reports/                # profile, analyze, consistency, validate, review
+   └─ evals/                  # skills/ (D10), qa/ (D12, giai đoạn sau)
 ```
 
 ### Skill cho agent nằm ở đâu?
 
 - **`.claude/skills/<tên-skill>/SKILL.md`**: nơi Claude Code tự nhận diện skill khi mở repo. File này chỉ chứa **quy trình**: các bước, lệnh CLI `sg` cần gọi, checklist, format output. Có thể kèm `references/` cho hướng dẫn riêng của skill đó.
-- **`knowledge/`**: **tri thức domain** dùng chung cho mọi skill (style guide, checklist, glossary, lessons, templates). Skill trỏ tới bằng đường dẫn, ví dụ "đọc `knowledge/glossary.md` trước khi sửa".
+- **Tri thức mà skill dùng tới:**
+  - **Chung** (`knowledge/`, repo public): style guide, checklist, templates.
+  - **Domain** (`data/knowledge/`, repo dữ liệu): glossary, lessons.
+  - Skill trỏ tới bằng đường dẫn.
 - **`CLAUDE.md`** ở gốc repo: luôn được nạp vào mọi phiên. Chứa quy ước chung (ID, link, guardrail D9) và danh sách lệnh `sg`, để skill không phải lặp lại.
 - **Quy tắc khi skill tiến hoá:**
-  - Thay đổi **quy trình** thì sửa `SKILL.md`.
-  - Thay đổi **tri thức domain** (thuật ngữ, rule rút ra từ review) thì sửa `knowledge/`.
-  - Nếu một `SKILL.md` bắt đầu chứa nội dung domain, chuyển nội dung đó sang `knowledge/` và chỉ để lại tham chiếu.
+  - Thay đổi **quy trình** thì sửa `SKILL.md` trên máy phát triển.
+  - Thay đổi **tri thức domain** thì sửa `data/knowledge/` trên máy dữ liệu.
+  - Nếu một `SKILL.md` bắt đầu chứa nội dung domain, chuyển nội dung đó sang `data/knowledge/` và chỉ để lại tham chiếu.
 - Vì skill theo định dạng `SKILL.md` chuẩn và tri thức nằm riêng, nếu sau này đổi sang agent khác thì chỉ cần trỏ agent đó tới cùng các file này.
 
 ### Ghi chú thiết kế
-- **`sources/` và `vault/` tách riêng.** `sources/` giữ nguyên bản Word→md để có thể build lại vault bất cứ lúc nào (ví dụ khi sửa parser). Sau khi tạo tag `baseline-original` thì **chỉ sửa trong `vault/`**, không build lại đè lên.
-- **`knowledge/` nằm ngoài `.claude/skills/`.** Đây là tài sản domain do expert duy trì, không phụ thuộc vào công cụ agent cụ thể. Các `SKILL.md` chỉ chứa quy trình và trỏ tới `knowledge/` bằng đường dẫn. Đổi sang agent khác thì vẫn dùng lại được.
+- **`data/sources/` và `data/vault/` tách riêng.** `sources/` giữ nguyên bản Word→md để có thể build lại vault (ví dụ khi sửa parser). Sau tag `baseline-original` thì **chỉ sửa trong `vault/`**, không build lại đè lên.
 - **Mọi thao tác máy móc đi qua CLI `sg`**, ví dụ `sg get WRN-0342`, `sg related WRN-0342`, `sg validate`, `sg export WRN`. Skill gọi CLI thay vì tự xử lý file, nên kết quả nhất quán và test được.
-- **`.obsidian/`:** chỉ commit phần config chung (ví dụ cài đặt link, thư mục attachments). Bỏ qua `workspace.json` và các file cache cá nhân trong `.gitignore`.
-- **Mở vault trong Obsidian:** mở đúng thư mục `vault/` trong Obsidian, không mở cả repo, để Obsidian không index `tools/`, `knowledge/`…
-- **Kích thước và bảo mật:**
-  - Nếu ảnh nhiều hoặc nặng, dùng **Git LFS** cho `sources/**/images` và `vault/attachments`.
-  - Spec là tài liệu nội bộ, nên repo phải để **private**. Nếu chính sách không cho đưa spec lên remote, giữ `sources/` và `vault/` trong repo riêng hoặc submodule nội bộ, còn `tools/`, `knowledge/`, `.claude/` ở repo chung.
-- **Quy trình Git:**
+- **Mở Obsidian đúng thư mục `data/vault/`**, không mở cả repo, để Obsidian không index `tools/`, `knowledge/`…
+- **Ảnh nặng:** nếu repo `data/` có remote nội bộ, cân nhắc dùng Git LFS cho `sources/**/images` và `vault/attachments`.
+- **Quy trình Git trong `data/`:**
   - `main` luôn là bản đã được duyệt.
-  - Mỗi lần improve là một branch `improve/WRN-0342-<mô tả>` và một PR. Diff gồm note, manifest (nếu đổi cấu trúc) và report.
-  - Tag `baseline-original` sau lần build vault đầu tiên. Có thể gắn thêm tag theo mốc, ví dụ `improve-round-1`.
+  - Mỗi lần improve là một branch `improve/WRN-0342-<mô tả>`, review bằng `git diff`. Diff gồm note, manifest (nếu đổi cấu trúc) và report.
+  - Tag `baseline-original` sau lần build vault đầu tiên được duyệt. Có thể gắn thêm tag theo mốc, ví dụ `improve-round-1`.
 
 ---
 
@@ -528,7 +507,7 @@ Kết quả của phase này dùng để chốt D1 (ngưỡng tách) và D2 (ID)
 - Viết `knowledge/` khởi điểm (style guide, checklist, template, glossary) và `CLAUDE.md`.
 - Bắt đầu với `spec-analyze`, vì chỉ báo cáo nên rủi ro thấp và giúp hiểu dữ liệu.
 - Sau đó đến `spec-restructure` và `spec-parameterize` trên một cụm section thí điểm.
-- Vận hành vòng lặp D10: mỗi lần improve là một PR, tích luỹ `lessons.md`, xây bộ eval 10–20 section mẫu cho skill.
+- Vận hành vòng lặp D10: mỗi lần improve là một branch trong repo `data/`, tích luỹ `data/knowledge/lessons.md`, xây bộ eval 10–20 section mẫu cho skill.
 - Tuỳ chọn: `spec-diagram` (D4).
 
 ### Giai đoạn sau: đánh giá bằng AI đọc hiểu
@@ -562,5 +541,5 @@ Kết quả của phase này dùng để chốt D1 (ngưỡng tách) và D2 (ID)
 | Đổi chunking giữa hai phiên bản                                  | Không biết cải thiện đến từ đâu | Cố định pipeline (D12)                                                                               |
 | BM25 của MCPVault quét toàn bộ vault mỗi lần query              | Chậm khi vault lớn                     | Giai đoạn improve không dùng MCPVault (D13). Nếu dùng về sau thì giới hạn bằng`pathPrefix` |
 | Mất bản gốc sau nhiều vòng improve                               | Không còn bản before để so sánh    | Git tag`baseline-original` ngay sau Phase 1                                                           |
-| Expert không quen terminal/git                                       | Review chậm, nghẽn vòng lặp D10      | Review qua PR trên web, xem vault bằng Obsidian. Cân nhắc MCPVault nếu vẫn vướng                |
+| Expert không quen terminal/git                                       | Review chậm, nghẽn vòng lặp D10      | Xem vault bằng Obsidian, dùng giao diện git (VS Code, Obsidian Git) để xem diff. Cân nhắc MCPVault nếu vẫn vướng                |
 | Tên note trùng ("Overview", "Requirements")                         | Wikilink sai đích                      | Đặt tên theo ID (D3)                                                                                 |

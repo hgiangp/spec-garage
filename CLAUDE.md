@@ -1,38 +1,41 @@
 # Spec Garage
 
-Repo để ingest và improve spec automotive (Word → Markdown + ảnh). Thiết kế và các quyết định (D1–D13): `docs/spec-pipeline-design.md`. Việc cần làm tiếp và đặc tả Phase 1: `docs/next-steps.md`.
+Repo để ingest và improve spec automotive (Word → Markdown + ảnh).
+- Thiết kế và các quyết định (D1–D13): `docs/spec-pipeline-design.md`.
+- Việc cần làm tiếp và đặc tả Phase 1: `docs/next-steps.md`.
 
 **Giai đoạn hiện tại:** Phase 0 (profile dữ liệu) → Phase 1 (vault) → Phase 2 (skills improve). RAG/chatbot để sau.
 
-## Chính sách dữ liệu
+## Chính sách dữ liệu và hai máy
 
-- Spec là tài liệu mật. Claude Code được phép đọc và sửa spec trong repo này.
-- **Không** đưa nội dung spec vào dịch vụ bên ngoài khác (web search, WebFetch, API bên thứ ba, artifact công khai).
-- **Remote GitHub hiện đang PUBLIC.** `.gitignore` có khối *PUBLIC-REPO GUARD* chặn `sources/`, `vault/<CODE>/`, `vault/attachments/`, `reports/`, `evals/`.
-  - Không gỡ khối này và không dùng `git add -f` cho các đường dẫn đó.
-  - `knowledge/` không bị chặn: **không commit nội dung domain** (glossary, lessons, ví dụ trích từ spec) khi repo còn public.
-  - Chỉ gỡ guard sau khi remote đã chuyển sang private hoặc nội bộ.
+- **Repo public (GitHub):** chỉ chứa code, skill, tri thức chung, tài liệu. **Không bao giờ chứa nội dung spec.**
+- **`data/`:** toàn bộ dữ liệu rút ra từ spec. Repo public luôn ignore thư mục này. Trên máy có dữ liệu, `data/` là **một git repo local riêng**.
+- **Máy phát triển:** viết code, push lên GitHub.
+- **Máy dữ liệu:** chỉ `git pull` repo public, không push. Làm việc với spec trong `data/`.
+- Claude Code được phép đọc và sửa spec trong `data/`. **Không** đưa nội dung spec vào dịch vụ bên ngoài khác (web search, WebFetch, API bên thứ ba, artifact công khai).
+- Không commit nội dung domain (trích spec, thuật ngữ riêng, lessons) vào repo public. Những thứ đó thuộc `data/knowledge/`.
 
 ## Cấu trúc
 
-| Thư mục | Vai trò | Quy tắc |
+| Đường dẫn | Repo | Vai trò |
 |---|---|---|
-| `sources/<CODE>/` | Spec gốc Word→md + ảnh | **Chỉ đọc.** Không sửa tay |
-| `vault/<CODE>/` | Obsidian vault, mỗi note là một section. Nguồn sự thật sau Phase 1 | Mọi improve sửa ở đây |
-| `vault/<CODE>/_manifest.yaml` | Cây section, thứ tự, `next_id`, `retired` | Chỉ sửa qua `sg` hoặc khi đổi cấu trúc có chủ đích |
-| `knowledge/` | Tri thức domain dùng chung cho mọi skill | Expert duyệt trước khi thêm rule |
-| `.claude/skills/` | Skill improve (chỉ chứa quy trình) | Nội dung domain đưa vào `knowledge/` |
-| `tools/` | CLI `sg` | Mọi thao tác máy móc đi qua đây |
-| `evals/`, `reports/` | Eval skill / câu hỏi vàng; output của analyze và validate | |
-| `specs.yaml` | Registry: mã spec ↔ file nguồn | |
+| `specs.yaml` | public | Registry: mã spec ↔ file nguồn |
+| `knowledge/` | public | Tri thức **chung**: style guide, quality checklist, templates section |
+| `.claude/skills/` | public | Skill improve (chỉ chứa quy trình) |
+| `tools/` | public | CLI `sg`. `tools/specgarage/data_template/` là khung cho `data/` |
+| `data/sources/<CODE>/` | data | Spec gốc Word→md + ảnh. **Chỉ đọc** |
+| `data/vault/<CODE>/` | data | Obsidian vault, mỗi note là một section. Nguồn sự thật sau Phase 1. Mọi improve sửa ở đây |
+| `data/vault/<CODE>/_manifest.yaml` | data | Cây section, thứ tự, `next_id`, `retired`. Chỉ sửa qua `sg` |
+| `data/knowledge/` | data | Tri thức **domain**: `glossary.md`, `lessons.md` |
+| `data/reports/`, `data/evals/` | data | Output của profile/validate/skill; eval case |
 
 ## Quy ước (D2, D3)
 
 - **Section ID:** `<CODE>-<NNNN>`, ví dụ `WRN-0342`.
-  - Gán cho mọi heading H1–H6.
-  - ID mới luôn bằng `next_id` trong manifest.
+  - Gán cho mọi heading H1–H6. Preamble (nội dung trước heading đầu tiên) là `<CODE>-0000`.
+  - ID mới chỉ lấy qua `sg new-id <CODE>`.
   - Không bao giờ đổi hoặc dùng lại ID. ID không mang ý nghĩa: số heading nằm ở `legacy_number`.
-- **Tên file note:** chỉ là ID, ví dụ `vault/WRN/WRN-0342.md`. Tiêu đề nằm trong `title` và `aliases`.
+- **Tên file note:** chỉ là ID, ví dụ `data/vault/WRN/WRN-0342.md`. Tiêu đề nằm trong `title` và `aliases`.
 - **Heading con trong note:** ngay dưới heading có dòng `<!-- id: WRN-0345 | legacy: 3.2.4.1 | anchors: _Ref512349999 -->`.
 - **Link:** `[[WRN-0342|Tiêu đề]]`, hoặc `[[WRN-0342#Heading con|…]]`. Hyperlink Word (`#_Ref…`, `#_Toc…`) được resolve qua trường `anchors`.
 - **Frontmatter:** `id, spec, title, aliases, legacy_number, heading_path, level, anchors, refs_out, status, derived_from`.
@@ -46,25 +49,35 @@ Repo để ingest và improve spec automotive (Word → Markdown + ảnh). Thi�
 ## Guardrail khi improve (D9)
 
 1. **Không bịa giá trị.** Thiếu thông tin thì ghi `> [!todo] ASSUMPTION: …` để expert điền.
-2. **Không đổi ngữ nghĩa** (giá trị, điều kiện, thứ tự hành vi) nếu chưa được expert xác nhận. Mọi thay đổi đi qua PR.
+2. **Không đổi ngữ nghĩa** (giá trị, điều kiện, thứ tự hành vi) nếu chưa được expert xác nhận. Mỗi lần improve là một branch trong repo `data/` để review bằng `git diff`.
 3. **Giữ nguyên ID, anchors, legacy_number.** Không xoá comment `<!-- id: … -->`.
 4. Chạy `sg validate` sau mỗi lần sửa (khi đã implement).
-5. Đọc `knowledge/style-guide.md`, `knowledge/glossary.md` và `knowledge/lessons.md` trước khi sửa.
+5. Trước khi sửa, đọc:
+   - `knowledge/style-guide.md`
+   - `data/knowledge/glossary.md`
+   - `data/knowledge/lessons.md` (lessons được ưu tiên hơn style guide khi mâu thuẫn)
 
 ## Lệnh
 
 Chạy từ gốc repo:
 
 ```bash
-uv run --project tools sg specs                    # kiểm tra registry và file nguồn
-uv run --project tools sg profile --out reports/profile.txt   # Phase 0
-uv run --project tools --group dev pytest tools/tests          # test tools
+uv run --project tools sg init-data [--migrate-legacy]              # máy dữ liệu: tạo data/ (git repo local)
+uv run --project tools sg specs                                     # kiểm tra registry và file nguồn
+uv run --project tools sg profile --out data/reports/profile.txt    # Phase 0
+uv run --project tools sg new-id WRN [-n 3]                         # cấp ID mới
+uv run --project tools --group dev pytest tools/tests               # test tools
 ```
 
 Các lệnh `build-vault`, `get`, `related`, `validate`, `export` đã có chỗ trong CLI nhưng chưa implement (Phase 1).
 
 ## Git
 
+**Repo public:**
 - `main` luôn là bản đã duyệt.
-- Mỗi lần improve là một branch `improve/<ID>-<mô-tả>` và một PR.
-- Tag `baseline-original` được gắn ngay sau lần build vault đầu tiên. Đây là bản "before", không được viết lại.
+- Mỗi ticket là một branch `phase1/<ticket>-<mô-tả>` và một PR.
+
+**Repo `data/` (local):**
+- `main` luôn là bản đã được expert duyệt.
+- Mỗi lần improve là một branch `improve/<ID>-<mô-tả>`.
+- Tag `baseline-original` được gắn ngay sau lần build vault đầu tiên được duyệt. Đây là bản "before", không được viết lại.

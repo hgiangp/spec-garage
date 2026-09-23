@@ -15,8 +15,8 @@ Sắp xếp lại cách trình bày. **Nội dung kỹ thuật giữ nguyên.**
 
 ## Quy trình
 
-1. **Nạp tri thức:** đọc `knowledge/style-guide.md`, `knowledge/lessons.md`, `knowledge/glossary.md`.
-2. **Lấy dữ liệu:** `sg get <ID>`, `sg related <ID>` và report analyze (`reports/analyze/<ID>.md`).
+1. **Nạp tri thức:** đọc `knowledge/style-guide.md`, `data/knowledge/lessons.md`, `data/knowledge/glossary.md`.
+2. **Lấy dữ liệu:** `sg get <ID>`, `sg related <ID>` và report analyze (`data/reports/analyze/<ID>.md`).
 3. **Chọn template** trong `knowledge/templates/` theo loại section: function, state machine, signal table, timing, DTC.
 4. **Liệt kê mọi "fact" trong bản gốc** trước khi viết lại: requirement, giá trị, điều kiện, link. Đây là checklist để bảo toàn nội dung.
 5. **Viết lại theo template:**
@@ -28,9 +28,9 @@ Sắp xếp lại cách trình bày. **Nội dung kỹ thuật giữ nguyên.**
    - Heading con mới: lấy ID mới qua `sg` (không tự đánh số).
    - Đặt `status: proposed`.
 8. **Chạy `sg validate`.**
-9. **Tóm tắt thay đổi** cho mô tả PR: cấu trúc cũ → mới, danh sách `ASSUMPTION` và `question`.
+9. **Tóm tắt thay đổi** cho ghi chú review (commit message của branch improve): cấu trúc cũ → mới, danh sách `ASSUMPTION` và `question`.
 
 ## Không được làm
 - Đổi giá trị, điều kiện, thứ tự hành vi.
-- Xoá thông tin vì "có vẻ thừa". Nếu trùng với section khác thì thay bằng link và ghi rõ trong PR.
+- Xoá thông tin vì "có vẻ thừa". Nếu trùng với section khác thì thay bằng link và ghi rõ trong ghi chú review.
 - Đổi tên signal.

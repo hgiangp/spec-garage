@@ -7,26 +7,17 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# Obsidian: per-user state only; shared settings in vault/.obsidian are committed
-vault/.obsidian/workspace*.json
-vault/.obsidian/cache
-vault/.trash/
+# ── DATA ────────────────────────────────────────────────────────────────────────
+# All spec-derived content lives in data/, which is its own local git repo on the data
+# machine (see docs/next-steps.md §0). This public repo never tracks it.
+/data/
+
+# Legacy locations from the first scaffold. Kept ignored so data copied there before the
+# move to data/ never shows up as untracked. Move it with: sg init-data --migrate-legacy
+/sources/
+/vault/
+/reports/
+/evals/
 
 # OS
 .DS_Store
-
-# ── PUBLIC-REPO GUARD ────────────────────────────────────────────────────────────
-# The GitHub remote is currently PUBLIC. Everything derived from real specs stays local.
-# Remove this block only after the remote is private / internal (see docs/next-steps.md §0).
-sources/*/*
-!sources/*/.gitkeep
-vault/*/
-!vault/.obsidian/
-!vault/attachments/
-vault/attachments/*
-!vault/attachments/.gitkeep
-reports/*
-!reports/README.md
-evals/skills/*/
-evals/qa/*
-!evals/qa/.gitkeep

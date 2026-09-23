@@ -126,7 +126,7 @@ def classify_link(target: str) -> tuple[str, str | None, str | None]:
 
 
 def parse_file(path: Path) -> Document:
-    text = path.read_text(encoding="utf-8", errors="replace")
+    text = path.read_text(encoding="utf-8-sig", errors="replace")  # BOM-safe (Windows)
     lines = text.splitlines()
 
     headings: list[Heading] = []

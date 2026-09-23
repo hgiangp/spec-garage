@@ -90,3 +90,9 @@ def test_edge_cases(tmp_path):
     assert [(l.kind, l.file_part, l.anchor) for l in doc.links] == [
         ("cross_file", "C:/Specs/7821ZXXXXF000_E_(LIN COMM)_250620.docx", "_Ref1"),
     ]
+
+
+def test_bom_does_not_hide_first_heading(tmp_path):
+    md = tmp_path / "bom.md"
+    md.write_bytes("﻿# 1 First\n\nText\n".encode("utf-8"))
+    assert [h.title for h in parse_file(md).headings] == ["1 First"]

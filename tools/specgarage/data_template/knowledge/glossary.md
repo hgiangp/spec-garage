@@ -6,6 +6,8 @@ status: draft  # bắt đầu trống, bổ sung dần qua các vòng review
 
 Thuật ngữ, viết tắt, ECU, signal và quy ước đặt tên. Agent đọc file này trước khi improve. Chỉ thêm mục khi expert xác nhận.
 
+File này nằm trong `data/knowledge/` (repo dữ liệu local) vì nội dung rút ra từ spec.
+
 ## Viết tắt và thuật ngữ
 
 | Term | Meaning | Notes / spec nguồn |

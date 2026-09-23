@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 REGISTRY = "specs.yaml"
+DATA_DIR = "data"  # local-only data repo; ignored by the public repo
 
 
 @dataclass
