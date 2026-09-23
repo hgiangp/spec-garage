@@ -3,6 +3,8 @@
 > Dành cho người hoặc worker (AI agent) nhận làm các bước sau khung repo.
 > Đọc trước: `CLAUDE.md` (quy ước, guardrail) và `docs/spec-pipeline-design.md` (lý do các quyết định D1–D13).
 > Cập nhật: 2026-09-23
+>
+> **Trạng thái hiện tại** của từng task: [`tasks.md`](tasks.md). **Hướng dẫn sử dụng** tính năng đã xong: [`guides/`](guides/).
 
 ## Tổng quan
 
@@ -353,5 +355,6 @@ Yêu cầu:
 - Thêm test với fixture GIẢ LẬP trong tools/tests/fixtures/. Không copy nội dung spec thật vào fixture hay commit.
 - Không commit gì trong data/ (và các vị trí cũ sources/, vault/, reports/, evals/), không git add -f.
 - Chạy: uv run --project tools --group dev pytest tools/tests
+- Theo "Definition of done" trong CLAUDE.md: cập nhật docs/tasks.md và docs/guides/<tính-năng>.md (tính năng làm gì, cách dùng, quy tắc, giới hạn, test).
 - Kết thúc: tóm tắt thay đổi, các điểm lệch khỏi đặc tả (nếu có) và lý do.
 ```

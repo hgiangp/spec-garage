@@ -3,6 +3,7 @@
 Repo để ingest và improve spec automotive (Word → Markdown + ảnh).
 - Thiết kế và các quyết định (D1–D13): `docs/spec-pipeline-design.md`.
 - Việc cần làm tiếp và đặc tả Phase 1: `docs/next-steps.md`.
+- Task list và trạng thái: `docs/tasks.md`. Hướng dẫn từng tính năng: `docs/guides/`.
 
 **Giai đoạn hiện tại:** Phase 0 (profile dữ liệu) → Phase 1 (vault) → Phase 2 (skills improve). RAG/chatbot để sau.
 
@@ -70,6 +71,20 @@ uv run --project tools --group dev pytest tools/tests               # test tools
 ```
 
 Các lệnh `build-vault`, `get`, `related`, `validate`, `export` đã có chỗ trong CLI nhưng chưa implement (Phase 1).
+
+## Definition of done (mọi commit/PR tính năng)
+
+Commit chỉ có code thì **chưa xong**. Mỗi task phải kèm:
+1. **`docs/tasks.md`:** cập nhật trạng thái, branch/commit, ghi chú.
+2. **`docs/guides/<tính-năng>.md`** (tạo mới hoặc cập nhật):
+   - tính năng làm gì;
+   - cách dùng (lệnh, ví dụ, output);
+   - quy tắc cho agent và người dùng;
+   - giới hạn đã biết;
+   - cách test.
+3. **Test** cho tính năng, dùng fixture giả lập, và toàn bộ test phải pass.
+4. **`CLAUDE.md`** nếu thêm hoặc đổi lệnh, quy ước.
+5. **Commit message** giải thích *vì sao* và mọi điểm lệch khỏi đặc tả trong `docs/next-steps.md`.
 
 ## Git
 

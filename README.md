@@ -5,6 +5,12 @@ Ingest và improve spec automotive (Word → Markdown + ảnh) cùng AI agent.
 - **Thiết kế và các quyết định:** [docs/spec-pipeline-design.md](docs/spec-pipeline-design.md)
 - **Quy ước cho agent và người:** [CLAUDE.md](CLAUDE.md)
 - **Hướng dẫn triển khai bước tiếp theo:** [docs/next-steps.md](docs/next-steps.md)
+- **Task list và trạng thái:** [docs/tasks.md](docs/tasks.md)
+- **Hướng dẫn sử dụng từng tính năng:**
+  - [workspace `data/` và `sg init-data`](docs/guides/data-workspace.md)
+  - [`sg profile`, `sg specs`, parser](docs/guides/profile.md)
+  - [Section ID, manifest, `sg new-id`](docs/guides/ids-manifest.md)
+  - [skill improve và tri thức](docs/guides/skills.md)
 
 ## Hai máy
 
