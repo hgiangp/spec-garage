@@ -8,6 +8,7 @@ from pathlib import Path
 
 from . import profile
 from .config import DATA_DIR, find_root, load_specs
+from .ids import IdError, allocate_ids
 from .init_data import init_data
 
 PLANNED = {
@@ -16,7 +17,6 @@ PLANNED = {
     "related": "Phase 1: các section refer tới / được refer bởi một ID, kể cả cross-file",
     "validate": "Phase 1: link gãy, ID trùng, manifest lệch, bảng thiếu cột",
     "export": "Phase 1: data/vault/ → build/export/<CODE>.md theo _manifest.yaml",
-    "new-id": "Phase 1 (T1/T6): cấp ID mới từ next_id trong _manifest.yaml",
 }
 
 
@@ -49,6 +49,16 @@ def cmd_init_data(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_new_id(args: argparse.Namespace) -> int:
+    try:
+        ids = allocate_ids(find_root(), args.code, args.n)
+    except IdError as e:
+        print(e, file=sys.stderr)
+        return 1
+    print("\n".join(ids))
+    return 0
+
+
 def cmd_planned(args: argparse.Namespace) -> int:
     print(f"`sg {args.command}` chưa được implement. {PLANNED[args.command]}", file=sys.stderr)
     return 2
@@ -70,6 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
                    help="chuyển dữ liệu ở vị trí cũ (sources/, vault/, reports/, evals/) vào data/")
     p.add_argument("--no-git", action="store_true", help="không chạy git init trong data/")
     p.set_defaults(func=cmd_init_data)
+
+    p = sub.add_parser("new-id", help="cấp ID mới từ next_id trong data/vault/<CODE>/_manifest.yaml")
+    p.add_argument("code", help="mã spec, ví dụ WRN")
+    p.add_argument("-n", type=int, default=1, help="số ID cần cấp")
+    p.set_defaults(func=cmd_new_id)
 
     p = sub.add_parser("specs", help="liệt kê specs.yaml và kiểm tra file nguồn")
     p.set_defaults(func=cmd_specs)

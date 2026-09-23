@@ -138,7 +138,7 @@ Nếu Phase 0 cho thấy converter xuất định dạng khác với những gì
 
 ## §3. Phase 1: implement công cụ vault
 
-Thứ tự đề xuất: **T1 → T2 → T5 → T4 → T3 → T6**, với T7 (test) đi kèm từng ticket. T1 bắt đầu được ngay, không cần chờ Phase 0.
+Thứ tự đề xuất: **T1 → T2 → T5 → T4 → T3 → T6** (T1 và T6 đã xong), với T7 (test) đi kèm từng ticket. T1 bắt đầu được ngay, không cần chờ Phase 0.
 
 ### Định dạng dữ liệu (hợp đồng chung)
 
@@ -196,7 +196,10 @@ tree:                      # chỉ gồm note, theo thứ tự tài liệu
 retired: []                # { id, merged_into | reason }
 ```
 
-### T1: `ids.py`, manifest và cấp ID
+### T1: `ids.py`, manifest và cấp ID ✅
+
+> Xong (branch `phase1/t1-ids-manifest`). API: `Manifest` (`allocate`, `check_id`, `walk`, `ids`, `find`, `parent_of`, `add`, `remove`, `retire`, `to_dict`/`from_dict`), `load_manifest`, `save_manifest` (ghi atomic), `manifest_path`, `allocate_ids`, `width_for`. `from_dict` từ chối tree có ID trùng, ID chưa cấp, ID đã retire, ID khác spec.
+
 
 - `load_manifest(code)`, `save_manifest(m)` (YAML, giữ thứ tự khoá).
 - `allocate(code, n=1) -> list[str]`: lấy từ `next_id`, tăng và ghi lại. Độ rộng số lấy từ `id_width` của manifest (D2: cố định cho cả spec). Báo lỗi nếu vượt quá độ rộng, không tự đổi độ rộng giữa chừng.
@@ -266,7 +269,10 @@ Có `--fix-refs` để cập nhật lại `refs_out`. Đây là thứ duy nhất
   - **in:** grep `[[ID` trên toàn vault.
   - Mỗi mục in ID, spec, tiêu đề, số token ước lượng. Không in nội dung, để agent tự `sg get` khi cần.
 
-### T6: `sg new-id <CODE> [-n N]`
+### T6: `sg new-id <CODE> [-n N]` ✅
+
+> Xong cùng T1.
+
 
 Wrapper CLI của `ids.allocate`, cần cho các skill khi tạo heading mới. Đã có chỗ trong `PLANNED` của `cli.py`. Làm cùng T1 vì chỉ vài dòng.
 
