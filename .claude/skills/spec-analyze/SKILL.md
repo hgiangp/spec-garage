@@ -30,31 +30,32 @@ Một trong:
 
 ```markdown
 ---
-target: WRN-0342            # hoặc data/sources/WRN/<file>.md#L120-L245
+target: WRN-0342            # or data/sources/WRN/<file>.md#L120-L245
 related: [WRN-0120, LIN-0033]
 date: YYYY-MM-DD
 ---
 
 # Analyze: <title>
 
-## Tóm tắt
-<2–4 câu: tình trạng chung, vấn đề lớn nhất.>
+## Summary
+<2–4 sentences: overall state, the most important problem.>
 
 ## Issues
-| # | Mức | Mã | Vị trí (dòng / câu trích ngắn) | Vấn đề | Gợi ý hướng xử lý |
+| # | Severity | Code | Location (line / short quote) | Problem | Suggested direction |
 |---|---|---|---|---|---|
-| 1 | High | Q1 | "…turn on immediately…" | "immediately" không kiểm tra được | Thay bằng parameter thời gian; giá trị cần expert |
+| 1 | High | Q1 | "…turn on immediately…" | "immediately" is not verifiable | Replace with a time parameter; value needed from expert |
 
-## Câu hỏi cho expert
-- <những điểm agent không tự quyết được>
+## Questions for the expert
+- <points the agent cannot decide on its own>
 
-## Gợi ý cải tổ cấu trúc
-- <ví dụ: gom 6 giá trị timing thành bảng parameter; tách behavior thành state machine>
+## Restructuring suggestions
+- <e.g. collect 6 timing values into a parameter table; move behavior into a state machine>
 ```
 
 ## Quy tắc
 
-- **Không suy đoán giá trị.** Nếu thấy thiếu, ghi là thiếu và đưa vào "Câu hỏi cho expert".
+- **Không suy đoán giá trị.** Nếu thấy thiếu, ghi là thiếu và đưa vào "Questions for the expert".
+- **Ngôn ngữ output:** report và mọi nội dung ghi vào spec/vault viết bằng **tiếng Anh**.
 - **Trích ngắn** (≤ 15 từ) để định vị. Không chép nguyên đoạn dài.
 - **Mâu thuẫn giữa các section** (Q6) phải nêu cả hai vị trí.
 - **Mức độ** theo bảng trong `quality-checklist.md`. Sắp xếp issue từ High xuống Low.

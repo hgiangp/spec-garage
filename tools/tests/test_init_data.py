@@ -37,7 +37,7 @@ def test_legacy_warning_and_migration(tmp_path):
     (root / "reports" / "profile.txt").write_text("stats", encoding="utf-8")
 
     log = init_data(root, git=False)
-    assert any("CẢNH BÁO" in line for line in log)
+    assert any("WARNING" in line for line in log)
     assert (legacy / "w.md").exists()
 
     init_data(root, migrate=True, git=False)

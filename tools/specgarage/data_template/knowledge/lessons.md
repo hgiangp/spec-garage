@@ -1,18 +1,18 @@
 # Lessons
 
-Rule rút ra từ review của domain expert (vòng lặp D10). Agent **phải** tuân theo các rule ở đây, ưu tiên hơn style guide khi mâu thuẫn.
+Rules distilled from domain-expert reviews (review loop D10). Agents **must** follow these rules; they take precedence over `knowledge/style-guide.md` when the two conflict.
 
-Mỗi rule: một dòng rule, lý do, nguồn (PR hoặc section), ngày. Không xoá rule cũ; nếu không còn đúng thì gạch đi và ghi lý do.
+One entry per rule: the rule, the reason, the source (review branch or section ID), the date. Never delete a rule; if it no longer applies, strike it through and state why.
 
 ## Format
 
 ```
-### L-001: <rule ngắn gọn>
-- Lý do: …
-- Nguồn: PR #…, WRN-0342
-- Ngày: YYYY-MM-DD
+### L-001: <short rule>
+- Reason: …
+- Source: improve/WRN-0342-…, WRN-0342
+- Date: YYYY-MM-DD
 ```
 
 ## Rules
 
-_Chưa có._
+_None yet._

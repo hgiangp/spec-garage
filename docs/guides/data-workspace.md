@@ -50,12 +50,12 @@ uv run --project tools sg init-data --migrate-legacy
 
 Output mẫu:
 ```
-đã chuyển: sources/WRN/7820ZXXXXG000_E_(Warning)_260220.md → data/sources/WRN/…
-đã tạo: data/README.md
-đã tạo: data/knowledge/glossary.md
+moved: sources/WRN/7820ZXXXXG000_E_(Warning)_260220.md -> data/sources/WRN/…
+created: data/README.md
+created: data/knowledge/glossary.md
 …
-đã tạo: data/sources/WRN/
-đã tạo git repo local: data/.git (không có remote)
+created: data/sources/WRN/
+initialised local git repo: data/.git (no remote)
 ```
 
 Commit lần đầu trong repo dữ liệu:
@@ -71,7 +71,7 @@ cd data && git add -A && git commit -m "Initial specs" && cd ..
 | `--migrate-legacy` | Chuyển từng file ở vị trí cũ (`sources/`, `vault/`, `reports/`, `evals/`) vào `data/` cùng đường dẫn. File đích đã tồn tại thì bỏ qua và báo. Thư mục cũ bị xoá khi đã rỗng |
 | `--no-git` | Không chạy `git init` |
 
-Nếu còn dữ liệu ở vị trí cũ mà không có `--migrate-legacy`, lệnh sẽ in `CẢNH BÁO` và không di chuyển gì.
+Nếu còn dữ liệu ở vị trí cũ mà không có `--migrate-legacy`, lệnh sẽ in `WARNING: data found in legacy locations…` và không di chuyển gì.
 
 ### Git trong `data/`
 
@@ -87,6 +87,7 @@ git tag baseline-original                   # một lần, sau build-vault đầ
 
 - **Không bao giờ** `git add -f` các đường dẫn `data/`, `sources/`, `vault/`, `reports/`, `evals/` trong repo public.
 - **Không sửa file của repo public trên máy dữ liệu**, nếu không `git pull` sẽ báo conflict. Nếu lỡ sửa (ví dụ `specs.yaml`): gửi thay đổi cho máy phát triển để commit, rồi chạy `git checkout -- <file>`.
+- Nội dung trong `data/` (glossary, lessons, report, eval) viết bằng **tiếng Anh**.
 - `data/knowledge/` chứa tri thức domain. Quy tắc **chung**, không chứa nội dung spec, thì gửi về máy phát triển để đưa vào `knowledge/` hoặc skill.
 - Repo `data/` có thể push lên git server **nội bộ**, không bao giờ lên remote public.
 

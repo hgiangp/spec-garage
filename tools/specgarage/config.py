@@ -26,7 +26,7 @@ def find_root(start: Path | None = None) -> Path:
     for p in (here, *here.parents):
         if (p / REGISTRY).is_file():
             return p
-    raise SystemExit(f"Không tìm thấy {REGISTRY} từ {here} trở lên. Hãy chạy trong repo spec-garage.")
+    raise SystemExit(f"{REGISTRY} not found in {here} or any parent. Run inside the spec-garage repo.")
 
 
 def load_specs(root: Path) -> list[Spec]:

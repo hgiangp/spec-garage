@@ -30,11 +30,11 @@ def migrate_legacy(root: Path, data: Path) -> list[str]:
         for f in sorted(p for p in legacy.rglob("*") if p.is_file() and p.name != ".gitkeep"):
             target = data / name / f.relative_to(legacy)
             if target.exists():
-                log.append(f"bỏ qua (đã tồn tại): {target.relative_to(root)}")
+                log.append(f"skipped (exists): {target.relative_to(root)}")
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(f), str(target))
-            log.append(f"đã chuyển: {f.relative_to(root)} → {target.relative_to(root)}")
+            log.append(f"moved: {f.relative_to(root)} -> {target.relative_to(root)}")
         if not _has_files(legacy):
             shutil.rmtree(legacy)
     return log
@@ -49,8 +49,8 @@ def init_data(root: Path, migrate: bool = False, git: bool = True) -> list[str]:
     if legacy and migrate:
         log += migrate_legacy(root, data)
     elif legacy:
-        log.append(f"CẢNH BÁO: còn dữ liệu ở vị trí cũ: {', '.join(legacy)}/. "
-                   "Chạy lại với --migrate-legacy để chuyển vào data/.")
+        log.append(f"WARNING: data found in legacy locations: {', '.join(legacy)}/. "
+                   "Re-run with --migrate-legacy to move it into data/.")
 
     for src in sorted(TEMPLATE.rglob("*")):
         if src.is_dir() or "__pycache__" in src.parts:
@@ -60,14 +60,14 @@ def init_data(root: Path, migrate: bool = False, git: bool = True) -> list[str]:
             continue
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
-        log.append(f"đã tạo: {dst.relative_to(root)}")
+        log.append(f"created: {dst.relative_to(root)}")
 
     for d in [data / "vault" / "attachments", *(data / "sources" / s.code for s in load_specs(root))]:
         if not d.exists():
             d.mkdir(parents=True)
-            log.append(f"đã tạo: {d.relative_to(root)}/")
+            log.append(f"created: {d.relative_to(root)}/")
 
     if git and not (data / ".git").exists():
         subprocess.run(["git", "init", "-q", str(data)], check=True)
-        log.append(f"đã tạo git repo local: {data.relative_to(root)}/.git (không có remote)")
+        log.append(f"initialised local git repo: {data.relative_to(root)}/.git (no remote)")
     return log

@@ -29,14 +29,14 @@ class IdError(ValueError):
 
 def format_id(code: str, number: int, width: int) -> str:
     if number >= 10 ** width:
-        raise IdError(f"{code}: số {number} vượt quá {width} chữ số (id_width)")
+        raise IdError(f"{code}: number {number} exceeds {width} digits (id_width)")
     return f"{code}-{number:0{width}d}"
 
 
 def parse_id(section_id: str) -> tuple[str, int]:
     m = ID_RE.match(section_id)
     if not m:
-        raise IdError(f"ID sai format: {section_id!r} (cần <CODE>-<NNNN>)")
+        raise IdError(f"invalid ID format: {section_id!r} (expected <CODE>-<NNNN>)")
     return m.group(1), int(m.group(2))
 
 
@@ -74,7 +74,7 @@ class Manifest:
 
     def allocate(self, n: int = 1) -> list[str]:
         if n < 1:
-            raise IdError("n phải ≥ 1")
+            raise IdError("n must be >= 1")
         ids = [format_id(self.spec, self.next_id + i, self.id_width) for i in range(n)]
         self.next_id += n
         return ids
@@ -83,11 +83,11 @@ class Manifest:
         """Validate that an ID belongs to this spec and has been allocated; return its number."""
         code, number = parse_id(section_id)
         if code != self.spec:
-            raise IdError(f"{section_id} không thuộc spec {self.spec}")
+            raise IdError(f"{section_id} does not belong to spec {self.spec}")
         if len(section_id) - len(code) - 1 != self.id_width:
-            raise IdError(f"{section_id}: sai độ rộng, spec {self.spec} dùng {self.id_width} chữ số")
+            raise IdError(f"{section_id}: wrong width, spec {self.spec} uses {self.id_width} digits")
         if number >= self.next_id:
-            raise IdError(f"{section_id} chưa được cấp (next_id = {self.next_id})")
+            raise IdError(f"{section_id} has not been allocated (next_id = {self.next_id})")
         return number
 
     def is_retired(self, section_id: str) -> bool:
@@ -113,29 +113,29 @@ class Manifest:
         for node, parent, _ in self.walk():
             if node.id == section_id:
                 return parent
-        raise IdError(f"{section_id} không có trong tree")
+        raise IdError(f"{section_id} is not in the tree")
 
     def _siblings(self, parent: str | None) -> list[Node]:
         if parent is None:
             return self.tree
         node = self.find(parent)
         if node is None:
-            raise IdError(f"parent {parent} không có trong tree")
+            raise IdError(f"parent {parent} is not in the tree")
         return node.children
 
     def add(self, section_id: str, parent: str | None = None, after: str | None = None) -> None:
         """Insert a note into the tree: under `parent`, right after sibling `after` (else last)."""
         self.check_id(section_id)
         if self.find(section_id) is not None:
-            raise IdError(f"{section_id} đã có trong tree")
+            raise IdError(f"{section_id} is already in the tree")
         if self.is_retired(section_id):
-            raise IdError(f"{section_id} đã retire, không dùng lại")
+            raise IdError(f"{section_id} is retired and cannot be reused")
         siblings = self._siblings(parent)
         pos = len(siblings)
         if after is not None:
             idx = next((i for i, s in enumerate(siblings) if s.id == after), None)
             if idx is None:
-                raise IdError(f"{after} không phải con của {parent or 'gốc'}")
+                raise IdError(f"{after} is not a child of {parent or 'the root'}")
             pos = idx + 1
         siblings.insert(pos, Node(section_id))
 
@@ -143,24 +143,24 @@ class Manifest:
         """Remove a leaf note from the tree. Children must be moved or removed first."""
         node = self.find(section_id)
         if node is None:
-            raise IdError(f"{section_id} không có trong tree")
+            raise IdError(f"{section_id} is not in the tree")
         if node.children:
-            raise IdError(f"{section_id} còn {len(node.children)} note con")
+            raise IdError(f"{section_id} still has {len(node.children)} child notes")
         self._siblings(self.parent_of(section_id)).remove(node)
 
     def retire(self, section_id: str, merged_into: str | None = None, reason: str = "") -> None:
         """Retire an ID for good (deleted or merged). A note still in the tree is removed from it."""
         self.check_id(section_id)
         if self.is_retired(section_id):
-            raise IdError(f"{section_id} đã retire")
+            raise IdError(f"{section_id} is already retired")
         if not merged_into and not reason:
-            raise IdError("retire cần merged_into hoặc reason")
+            raise IdError("retire needs merged_into or reason")
         if merged_into is not None:
             if merged_into == section_id:
-                raise IdError("merged_into không thể là chính nó")
+                raise IdError("merged_into cannot be the ID itself")
             self.check_id(merged_into)
             if self.is_retired(merged_into):
-                raise IdError(f"{merged_into} đã retire")
+                raise IdError(f"{merged_into} is retired")
         if self.find(section_id) is not None:
             self.remove(section_id)
         self.retired.append(Retired(section_id, merged_into, reason))
@@ -196,7 +196,7 @@ class Manifest:
                     (node_id, children), = item.items()
                     nodes.append(Node(node_id, load(children)))
                 else:
-                    raise IdError(f"tree: phần tử không hợp lệ: {item!r}")
+                    raise IdError(f"tree: invalid entry: {item!r}")
             return nodes
 
         m = cls(
@@ -214,9 +214,9 @@ class Manifest:
         for section_id in m.ids():
             m.check_id(section_id)
             if section_id in seen:
-                raise IdError(f"tree: {section_id} xuất hiện hai lần")
+                raise IdError(f"tree: {section_id} appears twice")
             if m.is_retired(section_id):
-                raise IdError(f"tree: {section_id} đã retire nhưng vẫn còn trong tree")
+                raise IdError(f"tree: {section_id} is retired but still in the tree")
             seen.add(section_id)
         return m
 
@@ -227,7 +227,7 @@ def manifest_path(root: Path, code: str) -> Path:
 
 def load_manifest(path: Path) -> Manifest:
     if not path.is_file():
-        raise IdError(f"Không có manifest: {path}. Chạy `sg build-vault` trước.")
+        raise IdError(f"No manifest at {path}. Run `sg build-vault` first.")
     return Manifest.from_dict(yaml.safe_load(path.read_text(encoding="utf-8")) or {})
 
 

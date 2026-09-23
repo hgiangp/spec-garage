@@ -1,35 +1,35 @@
 ---
-status: draft  # bắt đầu trống, bổ sung dần qua các vòng review
+status: draft  # starts empty, grows through review rounds
 ---
 
 # Glossary
 
-Thuật ngữ, viết tắt, ECU, signal và quy ước đặt tên. Agent đọc file này trước khi improve. Chỉ thêm mục khi expert xác nhận.
+Terms, abbreviations, ECUs, signals and naming conventions. Agents read this file before improving a section. Add entries only after an expert confirms them.
 
-File này nằm trong `data/knowledge/` (repo dữ liệu local) vì nội dung rút ra từ spec.
+This file lives in `data/knowledge/` (the local data repo) because its content is derived from the specs.
 
-## Viết tắt và thuật ngữ
+## Abbreviations and terms
 
-| Term | Meaning | Notes / spec nguồn |
+| Term | Meaning | Notes / source spec |
 |---|---|---|
 | LIN | Local Interconnect Network | `LIN` |
 | | | |
 
-## ECU / hệ thống
+## ECUs / systems
 
-| Tên | Vai trò | Spec liên quan |
+| Name | Role | Related specs |
 |---|---|---|
 | | | |
 
-## Signal
+## Signals
 
-| Signal | Bus / nguồn | Ý nghĩa | Giá trị | Spec định nghĩa |
+| Signal | Bus / source | Meaning | Values | Defined in |
 |---|---|---|---|---|
 | | | | | |
 
 ## Naming
 
-Quy ước đặt tên parameter, trạng thái, signal mới. Expert chốt.
+Naming conventions for new parameters, states and signals. Decided by the experts.
 
-- Parameter: _chưa chốt_ (ví dụ đề xuất: `T_<Function><Event>` cho thời gian, `N_<…>` cho số lần)
-- State: _chưa chốt_
+- Parameters: _not decided_ (proposal: `T_<Function><Event>` for times, `N_<…>` for counts)
+- States: _not decided_

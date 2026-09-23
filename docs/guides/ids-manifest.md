@@ -52,7 +52,7 @@ tree:                        # chỉ gồm note; heading con trong note không n
   - WRN-0400
 retired:
   - {id: WRN-0343, merged_into: WRN-0342}
-  - {id: WRN-0350, reason: "trùng nội dung với WRN-0120"}
+  - {id: WRN-0350, reason: "duplicates WRN-0120"}
 ```
 
 Khi đọc manifest, các lỗi sau bị từ chối: ID trùng trong tree, ID chưa được cấp (≥ `next_id`), ID đã retire mà vẫn còn trong tree, ID thuộc spec khác, sai độ rộng.
@@ -66,7 +66,7 @@ uv run --project tools sg new-id WRN          # → WRN-1289
 uv run --project tools sg new-id WRN -n 3     # → WRN-1290, WRN-1291, WRN-1292
 ```
 
-- Exit code `1` kèm thông báo lỗi nếu chưa có manifest (chưa chạy `build-vault`) hoặc ID vượt quá độ rộng.
+- Exit code `1` kèm thông báo lỗi (ví dụ `No manifest at …. Run \`sg build-vault\` first.`) nếu chưa có manifest (chưa chạy `build-vault`) hoặc ID vượt quá độ rộng.
 - **Dùng khi:** skill hoặc người thêm heading mới (tách section, thêm mục mới). **Không bao giờ tự đánh số.**
 
 ## API cho developer (T2, T4, skill script)
@@ -88,7 +88,7 @@ save_manifest(m, path)              # ghi atomic, thứ tự khoá cố định 
 m = load_manifest(path)
 ```
 
-Lỗi được báo bằng `IdError`, với thông báo tiếng Việt nói rõ ID nào và vì sao.
+Lỗi được báo bằng `IdError`, với thông báo tiếng Anh nói rõ ID nào và vì sao, ví dụ `WRN-0099 has not been allocated (next_id = 8)`.
 
 ## Quy tắc cho agent và người dùng
 

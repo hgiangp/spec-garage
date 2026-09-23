@@ -31,6 +31,7 @@ Sắp xếp lại cách trình bày. **Nội dung kỹ thuật giữ nguyên.**
 9. **Tóm tắt thay đổi** cho ghi chú review (commit message của branch improve): cấu trúc cũ → mới, danh sách `ASSUMPTION` và `question`.
 
 ## Không được làm
+- Viết bằng ngôn ngữ khác tiếng Anh: spec, ghi chú review, `ASSUMPTION`/`question` đều bằng **tiếng Anh**.
 - Đổi giá trị, điều kiện, thứ tự hành vi.
 - Xoá thông tin vì "có vẻ thừa". Nếu trùng với section khác thì thay bằng link và ghi rõ trong ghi chú review.
 - Đổi tên signal.

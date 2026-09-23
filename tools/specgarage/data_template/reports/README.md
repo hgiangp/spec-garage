@@ -7,4 +7,4 @@
 | `consistency/<ID>.md` | skill `spec-consistency` |
 | `validate/` | `sg validate` (Phase 1) |
 
-Report của một lần improve được commit cùng branch improve đó (trong repo `data/`).
+Report viết bằng **tiếng Anh**. Report của một lần improve được commit cùng branch improve đó (trong repo `data/`).

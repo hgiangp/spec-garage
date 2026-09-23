@@ -20,5 +20,6 @@ description: Extract hard-coded values (times, thresholds, counts, voltages, per
 7. **Kết thúc:** `status: proposed`, chạy `sg validate`, rồi tóm tắt cho ghi chú review: danh sách parameter mới / tái sử dụng, và các điểm TBD.
 
 ## Không được làm
+- Viết bằng ngôn ngữ khác tiếng Anh: bảng parameter, mô tả, ghi chú review đều bằng **tiếng Anh**.
 - Làm tròn hoặc đổi đơn vị giá trị.
 - Gộp hai giá trị giống nhau nhưng khác ý nghĩa vào một parameter.

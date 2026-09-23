@@ -193,6 +193,6 @@ def collect(paths: list[Path]) -> list[Path]:
 def run(paths: list[Path], thresholds: list[int], as_json: bool) -> str:
     files = collect(paths)
     if not files:
-        raise SystemExit("Không tìm thấy file .md nào.")
+        raise SystemExit("No .md files found.")
     report = profile_docs([parse_file(f) for f in files], thresholds)
     return json.dumps(report, ensure_ascii=False, indent=2) if as_json else render_text(report)

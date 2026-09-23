@@ -32,7 +32,7 @@ Report được ghi vào `data/reports/analyze/WRN-L<start>-L<end>.md`.
 ```
 Report được ghi vào `data/reports/analyze/WRN-0342.md`.
 
-Report gồm: tóm tắt, bảng issue (mức High/Medium/Low, mã Q1–Q8 / S1–S7, vị trí, gợi ý), câu hỏi cho expert, gợi ý cải tổ cấu trúc.
+Report viết bằng **tiếng Anh**, gồm: `Summary`, `Issues` (severity High/Medium/Low, code Q1–Q8 / S1–S7, location, suggestion), `Questions for the expert`, `Restructuring suggestions`.
 
 ## Tri thức skill dùng
 
@@ -47,6 +47,8 @@ Report gồm: tóm tắt, bảng issue (mức High/Medium/Low, mã Q1–Q8 / S1�
 Các file trong `knowledge/` đều là **bản nháp**, cần expert review.
 
 ## Guardrail (D9), áp dụng cho mọi skill có sửa spec
+
+0. **Mọi output ghi vào `data/` bằng tiếng Anh** (spec, report, glossary, lessons).
 
 1. **Không bịa giá trị.** Thiếu thông tin thì ghi `> [!todo] ASSUMPTION: …`.
 2. **Không đổi ngữ nghĩa** khi chưa được expert xác nhận. Mỗi lần improve là một branch trong repo `data/`.

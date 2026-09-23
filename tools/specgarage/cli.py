@@ -12,10 +12,10 @@ from .ids import IdError, allocate_ids
 from .init_data import init_data
 
 PLANNED = {
-    "build-vault": "Phase 1: data/sources/ → data/vault/ (tách note, gán ID, frontmatter, wikilink, copy ảnh)",
-    "get": "Phase 1: in section theo ID kèm breadcrumb",
-    "related": "Phase 1: các section refer tới / được refer bởi một ID, kể cả cross-file",
-    "validate": "Phase 1: link gãy, ID trùng, manifest lệch, bảng thiếu cột",
+    "build-vault": "Phase 1: data/sources/ → data/vault/ (split notes, assign IDs, frontmatter, wikilinks, copy images)",
+    "get": "Phase 1: print a section by ID with its breadcrumb",
+    "related": "Phase 1: sections an ID links to / is linked from, including cross-file",
+    "validate": "Phase 1: broken links, duplicate IDs, manifest drift, table column mismatches",
     "export": "Phase 1: data/vault/ → build/export/<CODE>.md theo _manifest.yaml",
 }
 
@@ -27,7 +27,7 @@ def cmd_profile(args: argparse.Namespace) -> int:
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(text + "\n", encoding="utf-8")
-        print(f"Đã ghi {args.out}")
+        print(f"Wrote {args.out}")
     else:
         print(text)
     return 0
@@ -60,7 +60,7 @@ def cmd_new_id(args: argparse.Namespace) -> int:
 
 
 def cmd_planned(args: argparse.Namespace) -> int:
-    print(f"`sg {args.command}` chưa được implement. {PLANNED[args.command]}", file=sys.stderr)
+    print(f"`sg {args.command}` is not implemented yet. {PLANNED[args.command]}", file=sys.stderr)
     return 2
 
 
@@ -68,29 +68,29 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="sg", description="Spec Garage tools")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p = sub.add_parser("profile", help="Phase 0: thống kê cấu trúc spec (heading, độ dài, anchor, link, bảng, ảnh)")
-    p.add_argument("paths", nargs="*", type=Path, help="file .md hoặc thư mục (mặc định: data/sources/)")
-    p.add_argument("--thresholds", default="2000,3000,5000,8000", help="ngưỡng token để mô phỏng tách note (D1)")
-    p.add_argument("--json", action="store_true", help="xuất JSON thay vì text")
-    p.add_argument("--out", type=Path, help="ghi ra file, ví dụ data/reports/profile.txt")
+    p = sub.add_parser("profile", help="Phase 0: structure statistics (headings, sizes, anchors, links, tables, images)")
+    p.add_argument("paths", nargs="*", type=Path, help=".md files or directories (default: data/sources/)")
+    p.add_argument("--thresholds", default="2000,3000,5000,8000", help="token thresholds for the note split simulation (D1)")
+    p.add_argument("--json", action="store_true", help="output JSON instead of text")
+    p.add_argument("--out", type=Path, help="write to a file, e.g. data/reports/profile.txt")
     p.set_defaults(func=cmd_profile)
 
-    p = sub.add_parser("init-data", help="tạo workspace dữ liệu local data/ (git repo riêng)")
+    p = sub.add_parser("init-data", help="create the local data workspace data/ (its own git repo)")
     p.add_argument("--migrate-legacy", action="store_true",
-                   help="chuyển dữ liệu ở vị trí cũ (sources/, vault/, reports/, evals/) vào data/")
-    p.add_argument("--no-git", action="store_true", help="không chạy git init trong data/")
+                   help="move data from the legacy locations (sources/, vault/, reports/, evals/) into data/")
+    p.add_argument("--no-git", action="store_true", help="do not run git init in data/")
     p.set_defaults(func=cmd_init_data)
 
-    p = sub.add_parser("new-id", help="cấp ID mới từ next_id trong data/vault/<CODE>/_manifest.yaml")
-    p.add_argument("code", help="mã spec, ví dụ WRN")
-    p.add_argument("-n", type=int, default=1, help="số ID cần cấp")
+    p = sub.add_parser("new-id", help="allocate new section IDs from next_id in data/vault/<CODE>/_manifest.yaml")
+    p.add_argument("code", help="spec code, e.g. WRN")
+    p.add_argument("-n", type=int, default=1, help="number of IDs to allocate")
     p.set_defaults(func=cmd_new_id)
 
-    p = sub.add_parser("specs", help="liệt kê specs.yaml và kiểm tra file nguồn")
+    p = sub.add_parser("specs", help="list specs.yaml and check that source files exist")
     p.set_defaults(func=cmd_specs)
 
     for name, desc in PLANNED.items():
-        p = sub.add_parser(name, help=f"(chưa implement) {desc}")
+        p = sub.add_parser(name, help=f"(not implemented) {desc}")
         p.add_argument("rest", nargs=argparse.REMAINDER)
         p.set_defaults(func=cmd_planned)
 

@@ -16,6 +16,19 @@ Repo để ingest và improve spec automotive (Word → Markdown + ảnh).
 - Claude Code được phép đọc và sửa spec trong `data/`. **Không** đưa nội dung spec vào dịch vụ bên ngoài khác (web search, WebFetch, API bên thứ ba, artifact công khai).
 - Không commit nội dung domain (trích spec, thuật ngữ riêng, lessons) vào repo public. Những thứ đó thuộc `data/knowledge/`.
 
+## Ngôn ngữ
+
+| Tiếng Việt (tạm thời) | Tiếng Anh (bắt buộc) |
+|---|---|
+| Tài liệu trong `docs/`, guide, `CLAUDE.md`, README, hướng dẫn trong `SKILL.md` | Code, comment, docstring, tên biến |
+| Trao đổi với người dùng | CLI help, log, message, thông báo lỗi |
+| | Commit message |
+| | Nội dung spec và mọi thứ ghi vào vault (requirement, bảng, `ASSUMPTION`, `question`, mô tả ảnh) |
+| | Report do agent sinh (`data/reports/`), glossary, lessons |
+| | Eval case, bộ câu hỏi vàng |
+
+Spec hiện tại là tiếng Anh. Mọi output mà agent ghi vào `data/` đều bằng tiếng Anh.
+
 ## Cấu trúc
 
 | Đường dẫn | Repo | Vai trò |

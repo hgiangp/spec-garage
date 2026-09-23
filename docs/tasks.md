@@ -33,6 +33,7 @@ Commit chỉ có code, không kèm các mục trên, thì chưa được coi là
 | F2 | Khung repo: `CLAUDE.md`, `specs.yaml`, skills, `knowledge/` | ✅ | 💻 | `0ea4f00`, `fcd3ce0` | [skills](guides/skills.md) | |
 | F3 | Parser + `sg profile` + `sg specs` | ✅ | 💻 | `0ea4f00`, sửa ở `fcd3ce0`, `f63aa37` | [profile](guides/profile.md) | |
 | F4 | Mô hình hai máy, `data/` + `sg init-data` | ✅ | 💻 | `f63aa37` | [data-workspace](guides/data-workspace.md) | |
+| F6 | Quy tắc ngôn ngữ: code/log/output tiếng Anh, tài liệu tiếng Việt | ✅ | 💻 | `phase1/t1-ids-manifest` | [CLAUDE.md §Ngôn ngữ](../CLAUDE.md) | CLI help, log, lỗi, format report, glossary/lessons chuyển sang tiếng Anh |
 | F5 | Tạo PR `scaffold/repo-skeleton` → `main` | ⏳ | 💻 | | | Máy chưa có `gh`, tạo PR trên web |
 
 ## Phase 0: profile dữ liệu thật

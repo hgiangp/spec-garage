@@ -223,7 +223,7 @@ derived_from: []
             - WRN-0340
             - WRN-0342
   retired:
-    - { id: WRN-0343, merged_into: WRN-0342, reason: "gộp bảng timeout" }
+    - { id: WRN-0343, merged_into: WRN-0342, reason: "timeout table merged" }
   ```
 - **Mục lục cho người đọc:** `vault/WRN/_toc.md` do script sinh từ manifest. Mở trong Obsidian để điều hướng theo cây heading.
 - **Ảnh:** copy vào `vault/attachments/WRN/`, nhúng bằng `![[...]]`.
@@ -346,7 +346,7 @@ Việc còn lại cho giai đoạn sau:
 ### D12: Phương pháp đánh giá before/after `P1`
 
 - **Cùng pipeline, cùng chunking, cùng model, cùng prompt.** Chỉ khác data.
-- **Bộ câu hỏi vàng** 50–150 câu. Mỗi câu gồm đáp án và ID section nguồn. Nhờ D2, câu hỏi dùng được cho cả hai phiên bản. Phân loại:
+- **Bộ câu hỏi vàng** 50–150 câu, viết bằng **tiếng Anh** (cùng ngôn ngữ với spec). Mỗi câu gồm đáp án và ID section nguồn. Nhờ D2, câu hỏi dùng được cho cả hai phiên bản. Phân loại:
   - Tra parameter
   - Hành vi / điều kiện / chuyển trạng thái
   - Cross-section / cross-file
