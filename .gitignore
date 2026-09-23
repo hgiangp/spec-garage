@@ -1,0 +1,16 @@
+# Build output (exports, indexes later)
+build/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Obsidian: per-user state only; shared settings in vault/.obsidian are committed
+vault/.obsidian/workspace*.json
+vault/.obsidian/cache
+vault/.trash/
+
+# OS
+.DS_Store
