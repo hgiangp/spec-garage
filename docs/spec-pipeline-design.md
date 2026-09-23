@@ -227,6 +227,7 @@ derived_from: []
   ```
 - **Mục lục cho người đọc:** `vault/WRN/_toc.md` do script sinh từ manifest. Mở trong Obsidian để điều hướng theo cây heading.
 - **Ảnh:** copy vào `vault/attachments/WRN/`, nhúng bằng `![[...]]`.
+- **Cập nhật:** Obsidian là tuỳ chọn. Cú pháp link (markdown chuẩn hay wikilink) chưa chốt, khuyến nghị markdown chuẩn. Xem `docs/handoff.md` §5.
 
 - [ ] Chốt quy ước
 

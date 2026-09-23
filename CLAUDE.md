@@ -1,6 +1,7 @@
 # Spec Garage
 
 Repo để ingest và improve spec automotive (Word → Markdown + ảnh).
+- **Bắt đầu phiên làm việc mới: đọc `docs/handoff.md` trước.**
 - Thiết kế và các quyết định (D1–D13): `docs/spec-pipeline-design.md`.
 - Việc cần làm tiếp và đặc tả Phase 1: `docs/next-steps.md`.
 - Task list và trạng thái: `docs/tasks.md`. Hướng dẫn từng tính năng: `docs/guides/`.

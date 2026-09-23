@@ -9,6 +9,16 @@ Theo dõi toàn bộ công việc của Spec Garage: trạng thái, branch/commi
 **Trạng thái:** ✅ xong · 🔄 đang làm · ⏳ chưa làm · ⛔ bị chặn (ghi lý do)
 **Máy:** 💻 máy phát triển (push GitHub) · 🗄️ máy dữ liệu (chỉ pull, có `data/`)
 
+## Bàn giao
+
+Từ 2026-09-23, việc phát triển chuyển sang **máy dữ liệu**. Bắt đầu từ [`handoff.md`](handoff.md):
+- trạng thái;
+- quy trình convert;
+- câu hỏi Q1–Q5 cần dữ liệu;
+- cập nhật đặc tả T2–T5;
+- gate A/B/C;
+- cách chuyển commit về GitHub.
+
 ## Quy tắc cập nhật
 
 Mỗi commit hoặc PR hoàn thành (một phần) task phải kèm:
@@ -42,9 +52,9 @@ Commit chỉ có code, không kèm các mục trên, thì chưa được coi là
 |---|---|---|---|---|---|---|
 | P0.1 | `sg init-data --migrate-legacy`, commit đầu tiên trong `data/` | ✅ | 🗄️ | (repo `data/`) | [data-workspace](guides/data-workspace.md) | Spec đã ở `data/sources/`. Xác nhận đã commit trong repo `data/` |
 | P0.2 | Chạy `sg profile` trên 3 spec | ✅ | 🗄️ | | [findings](phase0-findings.md) | Kết quả tổng hợp ở `phase0-findings.md` |
-| P0.3 | Đọc profile: định dạng anchor, tỷ lệ link gãy, `legacy_number` | 🔄 | 🗄️ + 💻 | | [findings §2](phase0-findings.md#2-phát-hiện-và-xử-lý) | F1–F8 đã phân tích. **Chờ chạy lại `--diagnose`** sau P0.5 |
-| P0.4 | Chốt ngưỡng tách D1 | 🔄 | 🗄️ + expert | | [findings §3](phase0-findings.md#3-ngưỡng-tách-d1) | **Đề xuất 3000** (445 note). Chờ expert xác nhận |
-| P0.5 | Sửa parser theo định dạng thật của converter | 🔄 | 💻 | `phase0/p05-anchor-resolution` | [profile](guides/profile.md) | Đã làm: `id` trên mọi tag, placement `before_heading`, slug ngầm, `--diagnose`, số heading, số tài liệu được nhắc. Có thể cần thêm sau khi có kết quả diagnose |
+| P0.3 | Đọc profile: định dạng anchor, tỷ lệ link gãy, `legacy_number` | 🔄 | 🗄️ | | [handoff §4](handoff.md#4-câu-hỏi-mở-cần-dữ-liệu-làm-trước-t2) | Q1–Q3: `--diagnose`, nguyên nhân `_Ref` lỗi |
+| P0.4 | Chốt ngưỡng tách D1 (Q4) | 🔄 | 🗄️ + expert | | [findings §3](phase0-findings.md#3-ngưỡng-tách-d1) | **Đề xuất 3000** (445 note). Chờ expert xác nhận |
+| P0.5 | Sửa parser theo định dạng thật của converter | 🔄 | 🗄️ | `phase0/p05-anchor-resolution` | [profile](guides/profile.md) | Đã làm: `id` trên mọi tag, placement `before_heading`, slug ngầm, `--diagnose`, số heading, số tài liệu được nhắc. Có thể cần thêm sau khi có kết quả diagnose |
 
 ## Phase 1: công cụ vault
 
@@ -52,12 +62,13 @@ Commit chỉ có code, không kèm các mục trên, thì chưa được coi là
 |---|---|---|---|---|---|---|
 | T1 | `ids.py`: manifest, cấp ID, cây note, retire | ✅ | 💻 | `phase1/t1-ids-manifest` · `8095e35` | [ids-manifest](guides/ids-manifest.md) | `id_width` cố định cho cả spec |
 | T6 | `sg new-id <CODE> [-n N]` | ✅ | 💻 | `8095e35` | [ids-manifest §new-id](guides/ids-manifest.md#sg-new-id) | Làm cùng T1 |
-| T2 | `sg build-vault` | ⛔ | 💻 | | | Chờ kết quả `--diagnose` (P0.3) và ngưỡng (P0.4) |
-| T5 | `sg export` + test round-trip | ⏳ | 💻 | | | Sau T2 |
-| T4 | `sg validate` (V01–V10) | ⏳ | 💻 | | | |
-| T3 | `sg get`, `sg related` | ⏳ | 💻 | | | Cần cho 4 skill draft |
-| T7 | Mở rộng fixture và test | 🔄 | 💻 | | | Làm dần theo từng ticket |
-| T8 | Tạo PR `phase1/t1-ids-manifest` → `main` | ⏳ | 💻 | | | Sau F5 |
+| Q5 | Chốt cú pháp link trong vault: markdown chuẩn (khuyến nghị) hay Obsidian | ⏳ | chủ repo | | [handoff §5](handoff.md#5-quyết-định-cần-chốt-trước-t2-có-dùng-obsidian-không) | Chặn T2 |
+| T2 | `sg build-vault` | ⛔ | 🗄️ | | [handoff §6](handoff.md#6-cập-nhật-đặc-tả-so-với-next-stepsmd-áp-dụng-khi-làm-t2t5) | Chờ Q1–Q5 |
+| T5 | `sg export` + test round-trip | ⏳ | 🗄️ | | | Sau T2 |
+| T4 | `sg validate` (V01–V10) | ⏳ | 🗄️ | | | |
+| T3 | `sg get`, `sg related` | ⏳ | 🗄️ | | | Cần cho 4 skill draft |
+| T7 | Mở rộng fixture và test | 🔄 | 🗄️ | | | Làm dần theo từng ticket |
+| T8 | Tạo **một** PR `phase0/p05-anchor-resolution` → `main` (đã chứa mọi commit, thay cho F5) | ⏳ | 💻 | | | Tạo trên web |
 
 ## Phase 1b: vault từ spec thật
 

@@ -1,6 +1,7 @@
 # Phase 0: kết quả profile và đề xuất quyết định
 
 > Nguồn: `sg profile` chạy trên máy dữ liệu, 2026-09-23 (trước P0.5).
+> **Cập nhật sau khi có mẫu thật và lệnh convert:** xem [`handoff.md`](handoff.md) §3. F2 và F4 bên dưới đã được đính chính.
 > File này chỉ ghi **số liệu tổng hợp**, không chứa nội dung spec, tên heading hay tên slug.
 > Guide đọc số liệu: [`guides/profile.md`](guides/profile.md). Task: P0.2–P0.5 trong [`tasks.md`](tasks.md).
 
@@ -27,9 +28,9 @@
 | # | Phát hiện | Hệ quả | Xử lý |
 |---|---|---|---|
 | F1 | Gần như mọi heading đều có số trong tiêu đề | `legacy_number` lấy thẳng từ tiêu đề | T2: đọc từ tiêu đề. Heading không có số thì để trống |
-| F2 | 0 heading có anchor trên cùng dòng, dù có hàng trăm anchor HTML | Nhiều khả năng anchor nằm ở dòng riêng ngay trước heading. Parser cũ gán nhầm vào section **phía trước** | P0.5: thêm placement `before_heading`. **Cần chạy lại để xác nhận** |
+| F2 | 0 heading có anchor trên cùng dòng, dù có hàng trăm anchor HTML | **Đính chính:** pandoc thay bookmark trên heading bằng slug và viết lại link (mẫu thật cho thấy vậy). Các anchor HTML là anchor của **caption bảng/hình** (`<span id class="anchor">`). Không có rủi ro gán nhầm section | P0.5 resolve slug. Placement `before_heading` giữ lại, vô hại |
 | F3 | Link không resolve 27–42 %. Ở LIN, phần lớn là link dạng slug tiêu đề | Converter tạo link tới heading bằng slug kiểu pandoc | P0.5: sinh anchor ngầm từ tiêu đề (pandoc + GitHub) |
-| F4 | Ở WRN và EWA, phần lớn anchor chưa resolve là `_Ref…` | Có thể do anchor nằm trên tag khác `<a>`/`<span>`/`<div>`, hoặc bookmark thật sự mất | P0.5: nhận `id=` trên mọi tag. **`--diagnose` sẽ phân loại phần còn lại** |
+| F4 | Ở WRN và EWA, phần lớn anchor chưa resolve là `_Ref…` | Không phải tham chiếu tới heading (vì pandoc đã viết lại những link đó). Có thể là bookmark trong shape (đã thành PNG) hoặc trong ô bảng (bị chuyển sang GFM) | **Chưa rõ.** Xem câu hỏi Q1–Q3 trong `handoff.md` §4 |
 | F5 | Không có link cross-file | Tham chiếu giữa các spec chỉ ở dạng chữ | Profile giờ đếm số tài liệu được nhắc trong nội dung. `spec-consistency` dựa vào đó và vào tên signal |
 | F6 | Nhiều bảng HTML (WRN 219) | T2 không được cắt giữa bảng HTML. Export phải giữ nguyên | Ghi vào đặc tả T2 và T5 |
 | F7 | Heading trùng tiêu đề nhiều (WRN 166) dù có số | Có thể số heading bị lặp (đánh số lại theo chương) | Profile giờ có `duplicate numbers`. **Cần chạy lại** |
@@ -55,14 +56,8 @@
 
 ## 4. Việc tiếp theo
 
-1. **Máy dữ liệu:** pull branch `phase0/p05-anchor-resolution`, rồi chạy:
-   ```bash
-   uv run --project tools sg profile --diagnose --out data/reports/profile-diagnose.txt
-   ```
-2. Gửi các dòng sau trong report sang máy phát triển:
-   - `heading numbers`, `anchors …` (`syntax`, `placement`), `links internal …`, `other doc numbers…`, `over:`;
-   - mục `diagnose unresolved anchors`: dòng tổng, và các dòng `present` (chỉ có khung markup).
-   
-   Dòng `slug` chứa slug tiêu đề heading. Chỉ gửi nếu tiêu đề heading không bị coi là nhạy cảm; nếu không, chỉ gửi con số tổng.
-3. Máy phát triển: nếu còn loại `present`, bổ sung parser theo khung markup (kèm fixture giả lập).
-4. Khi tỷ lệ link không resolve còn thấp (các link còn lại là bookmark mất thật): **bỏ chặn T2**.
+Chuyển sang máy dữ liệu, xem [`handoff.md`](handoff.md):
+- §4: câu hỏi Q1–Q5, bắt đầu bằng `sg profile --diagnose`;
+- §8: thứ tự việc.
+
+Khi chạy lại profile trên máy dữ liệu, cập nhật số liệu ở §1 và cột "Xử lý" ở §2 của file này. Chỉ ghi số tổng hợp, không ghi tên slug hay tiêu đề heading.

@@ -2,6 +2,7 @@
 
 Ingest và improve spec automotive (Word → Markdown + ảnh) cùng AI agent.
 
+- **Bàn giao / điểm bắt đầu:** [docs/handoff.md](docs/handoff.md)
 - **Thiết kế và các quyết định:** [docs/spec-pipeline-design.md](docs/spec-pipeline-design.md)
 - **Quy ước cho agent và người:** [CLAUDE.md](CLAUDE.md)
 - **Hướng dẫn triển khai bước tiếp theo:** [docs/next-steps.md](docs/next-steps.md)
