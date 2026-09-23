@@ -96,3 +96,56 @@ def test_bom_does_not_hide_first_heading(tmp_path):
     md = tmp_path / "bom.md"
     md.write_bytes("﻿# 1 First\n\nText\n".encode("utf-8"))
     assert [h.title for h in parse_file(md).headings] == ["1 First"]
+
+
+ANCHORS = FIXTURES / "DMC" / "9999ZXXXXC000_E_(Demo Anchors)_260101.md"
+
+
+def test_anchor_placement_and_html_tags():
+    doc = parse_file(ANCHORS)
+    by_anchor = {a.anchor: a for a in doc.anchor_defs}
+    titles = {h.index: h.title for h in doc.headings}
+    # alone on the line before a heading -> belongs to that heading, not the previous section
+    assert by_anchor["_Toc500001"].placement == "before_heading"
+    assert titles[doc.anchors["_Toc500001"]] == "1 Overview"
+    assert by_anchor["_Toc500003"].placement == "before_heading"
+    assert titles[doc.anchors["_Ref500004"]] == "1.2 Abnormal Checksum Detection"
+    assert by_anchor["_Ref500002"].placement == "after_heading"
+    assert titles[doc.anchors["_Ref500002"]] == "1.1 Scope and Limits"
+    # id on any tag, and inside HTML tables
+    assert by_anchor["_Ref500010"].syntax == "html:p" and by_anchor["_Ref500010"].placement == "inline"
+    assert by_anchor["_Ref500020"].placement == "table"
+    assert "_Ref500030" not in doc.anchors  # w:name is not an HTML id/name attribute
+    assert doc.headings[0].anchors == ["_Toc500001"]
+
+
+def test_implicit_heading_slugs():
+    doc = parse_file(ANCHORS)
+    titles = {h.index: h.title for h in doc.headings}
+    assert titles[doc.resolve("abnormal-checksum-detection")[1]] == "1.2 Abnormal Checksum Detection"
+    assert titles[doc.resolve("overview-1")[1]] == "2 Overview"  # pandoc de-duplication
+    assert titles[doc.resolve("11-scope-and-limits")[1]] == "1.1 Scope and Limits"  # GitHub style
+    assert doc.resolve("_Ref599999") == (False, None)
+
+
+def test_profile_diagnose_is_redacted():
+    report = profile_docs([parse_file(ANCHORS)], [100], diagnose=True)
+    f = report["files"][0]
+    assert f["links"]["internal_resolved_by_slug"] == 3
+    assert f["links"]["internal_unresolved_sample"] == ["_Ref500030", "_Ref599999", "abnormal-checksum-detect"]
+    assert f["doc_number_mentions"] == {"7821ZXXXXF000": 2}
+    assert f["anchors"]["placement"]["before_heading"] == 3
+
+    diag = f["diagnose_unresolved"]
+    assert (diag["present_but_unrecognised"], diag["absent_slug_like"], diag["absent_other"]) == (1, 1, 1)
+    skeleton = diag["samples"][0]["skeleton"]
+    assert "{ANCHOR}" in skeleton and "bookmarkStart" in skeleton
+    assert "converter" not in skeleton and "markup" not in skeleton.lower()
+    assert diag["slug_samples"][0]["closest_heading_slug"] == "abnormal-checksum-detection"
+    assert diag["absent_samples"] == ["_Ref599999"]
+
+
+def test_over_threshold_sample_uses_numbers_not_titles():
+    split = profile_docs([parse_file(ANCHORS)], [20])["files"][0]["split_simulation"]["20"]
+    assert split["over_sample"]
+    assert all(set(o["heading"]) <= set("0123456789.Hpreamble@line") for o in split["over_sample"])

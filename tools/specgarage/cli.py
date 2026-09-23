@@ -23,7 +23,7 @@ PLANNED = {
 def cmd_profile(args: argparse.Namespace) -> int:
     paths = args.paths or [find_root() / DATA_DIR / "sources"]
     thresholds = [int(t) for t in args.thresholds.split(",")]
-    text = profile.run(paths, thresholds, args.json)
+    text = profile.run(paths, thresholds, args.json, args.diagnose)
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(text + "\n", encoding="utf-8")
@@ -72,6 +72,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("paths", nargs="*", type=Path, help=".md files or directories (default: data/sources/)")
     p.add_argument("--thresholds", default="2000,3000,5000,8000", help="token thresholds for the note split simulation (D1)")
     p.add_argument("--json", action="store_true", help="output JSON instead of text")
+    p.add_argument("--diagnose", action="store_true",
+                   help="explain unresolved anchors with redacted markup skeletons (no spec text)")
     p.add_argument("--out", type=Path, help="write to a file, e.g. data/reports/profile.txt")
     p.set_defaults(func=cmd_profile)
 

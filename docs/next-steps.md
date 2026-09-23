@@ -227,7 +227,11 @@ retired: []                # { id, merged_into | reason }
 8. **An toàn:**
    - Từ chối ghi đè `data/vault/<CODE>/` đã tồn tại nếu không có `--force`.
    - Nếu tag `baseline-original` đã tồn tại trong repo `data/` thì từ chối kể cả khi có `--force`, trừ khi có thêm `--i-know-baseline-exists`.
-9. Nếu Phase 0 cho thấy số heading bị mất: tính `legacy_number` từ vị trí trong cây.
+9. `legacy_number` lấy từ tiêu đề: Phase 0 cho thấy ≥ 98.6 % heading có số. Heading không có số thì để trống.
+10. **Từ Phase 0** ([phase0-findings.md](phase0-findings.md)):
+    - Dòng chỉ có anchor nằm ngay trước heading (`placement: before_heading`) được **chuyển vào note của heading đó**. Nội dung của anchor giữ ở dạng `<!-- anchor: … -->` ngay trên hoặc dưới heading, không để lại ở cuối note phía trước.
+    - Link tới slug tiêu đề (anchor ngầm) cũng được đổi sang `[[ID]]`, giống link `_Ref`.
+    - Không cắt giữa bảng HTML (`<table>…</table>`). Bảng HTML được giữ nguyên văn.
 
 ### T5: `export.py` (`sg export <CODE> [--keep-ids]`)
 

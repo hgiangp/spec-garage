@@ -79,6 +79,7 @@ Chạy từ gốc repo:
 uv run --project tools sg init-data [--migrate-legacy]              # máy dữ liệu: tạo data/ (git repo local)
 uv run --project tools sg specs                                     # kiểm tra registry và file nguồn
 uv run --project tools sg profile --out data/reports/profile.txt    # Phase 0
+uv run --project tools sg profile --diagnose                         # giải thích anchor chưa resolve (không lộ chữ)
 uv run --project tools sg new-id WRN [-n 3]                         # cấp ID mới
 uv run --project tools --group dev pytest tools/tests               # test tools
 ```

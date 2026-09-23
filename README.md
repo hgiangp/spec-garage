@@ -6,6 +6,7 @@ Ingest và improve spec automotive (Word → Markdown + ảnh) cùng AI agent.
 - **Quy ước cho agent và người:** [CLAUDE.md](CLAUDE.md)
 - **Hướng dẫn triển khai bước tiếp theo:** [docs/next-steps.md](docs/next-steps.md)
 - **Task list và trạng thái:** [docs/tasks.md](docs/tasks.md)
+- **Kết quả Phase 0 (profile):** [docs/phase0-findings.md](docs/phase0-findings.md)
 - **Hướng dẫn sử dụng từng tính năng:**
   - [workspace `data/` và `sg init-data`](docs/guides/data-workspace.md)
   - [`sg profile`, `sg specs`, parser](docs/guides/profile.md)

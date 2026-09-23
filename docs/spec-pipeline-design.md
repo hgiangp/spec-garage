@@ -137,7 +137,7 @@ Mức ưu tiên: **P0** chặn mọi thứ phía sau, **P1** cần trước khi 
 Các heading sâu hơn (H4–H6) nằm luôn trong note đó.
 
 - [ ] Chốt phương án
-- [ ] Chốt ngưỡng sau khi profile (xem Phase 0)
+- [ ] Chốt ngưỡng sau khi profile (xem Phase 0). **Đề xuất: 3000**, xem `docs/phase0-findings.md` §3
 
 ### D2: Section ID `P0` ✅ Đề xuất đã có
 
