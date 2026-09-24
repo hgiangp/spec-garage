@@ -47,6 +47,8 @@ MD_IMG_RE = re.compile(r"!\[[^\]]*\]" + _DEST)
 HTML_IMG_RE = re.compile(r"<img\b[^>]*?\bsrc\s*=\s*[\"']([^\"']+)[\"']", re.I)
 WIKI_IMG_RE = re.compile(r"!\[\[([^\]|#]+)")
 
+BLANK_LINE_RE = re.compile(r"\n[ \t]*\n")
+
 PIPE_SEP_RE = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$")
 GRID_BORDER_RE = re.compile(r"^\s*\+([-=:]+\+)+\s*$")
 
@@ -200,6 +202,8 @@ def parse_file(path: Path) -> Document:
     prev_grid = False
     table_depth = 0
     current: int | None = None
+    # Lines that links and images may be scanned in, blanked out elsewhere so offsets stay put.
+    scannable = [" " * len(l) for l in lines]
 
     for i, line in enumerate(lines, start=1):
         fence = FENCE_RE.match(line)
@@ -233,18 +237,12 @@ def parse_file(path: Path) -> Document:
             raw_defs.append((a, i, f"html:{tag.lower()}", in_table))
         table_depth = max(0, table_depth + len(TABLE_OPEN_RE.findall(line)) - len(TABLE_CLOSE_RE.findall(line)))
 
-        for rx in (MD_LINK_RE, HTML_LINK_RE):
-            for target in map(_dest, rx.findall(line)):
-                kind, file_part, anchor = classify_link(target)
-                links.append(Link(i, target, kind, file_part, anchor, current))
         ref = REF_DEF_RE.match(line)
         if ref:
             kind, file_part, anchor = classify_link(ref.group(2))
             links.append(Link(i, ref.group(2), kind, file_part, anchor, current))
-
-        for rx in (MD_IMG_RE, HTML_IMG_RE, WIKI_IMG_RE):
-            for target in map(_dest, rx.findall(line)):
-                images.append(Image(i, unquote(target.strip()), current))
+        else:
+            scannable[i - 1] = line  # link/image scanning happens on the whole text, see below
 
         if PIPE_SEP_RE.match(line):
             tables["pipe"] += 1
@@ -255,6 +253,8 @@ def parse_file(path: Path) -> Document:
         tables["html"] += len(TABLE_OPEN_RE.findall(line))
 
     _build_tree(headings, lines)
+    _scan_links_and_images("\n".join(scannable), headings, links, images)
+    links.sort(key=lambda l: l.line)  # reference definitions were collected in the line pass
     anchor_defs = _place_anchors(raw_defs, headings, lines)
     anchors: dict[str, int | None] = {}
     for d in anchor_defs:
@@ -271,6 +271,40 @@ def parse_file(path: Path) -> Document:
         links=links, images=images,
         tables=tables, setext_suspects=setext_suspects, preamble_chars=preamble_chars,
     )
+
+
+def _scan_links_and_images(text: str, headings: list[Heading],
+                           links: list[Link], images: list[Image]) -> None:
+    """Find links and images in the whole text, not line by line.
+
+    pandoc wraps long link text and image alt text, so ``![two-line alt](image.png)`` and
+    ``[two-line\\ntext](#_Ref1)`` straddle a line break and a per-line scan misses them entirely.
+    """
+    starts = [0]
+    for line in text.split("\n"):
+        starts.append(starts[-1] + len(line) + 1)
+    heading_lines = [h.line for h in headings]
+
+    def where(pos: int) -> tuple[int, int | None]:
+        line = bisect.bisect_right(starts, pos)
+        k = bisect.bisect_right(heading_lines, line) - 1
+        return line, (headings[k].index if k >= 0 else None)
+
+    found: list[tuple[int, int, str, bool]] = []  # position, tiebreak, target, is_image
+    for rx, is_image in ((MD_IMG_RE, True), (HTML_IMG_RE, True), (WIKI_IMG_RE, True),
+                         (MD_LINK_RE, False), (HTML_LINK_RE, False)):
+        for m in rx.finditer(text):
+            if BLANK_LINE_RE.search(m.group(0)):
+                continue  # link text cannot span a paragraph break: this is a stray bracket
+            found.append((m.start(), 0, _dest(m.groups()), is_image))
+
+    for pos, _, target, is_image in sorted(found):
+        line, heading = where(pos)
+        if is_image:
+            images.append(Image(line, unquote(target.strip()), heading))
+        else:
+            kind, file_part, anchor = classify_link(target)
+            links.append(Link(line, target, kind, file_part, anchor, heading))
 
 
 def _place_anchors(raw_defs: list[tuple[str, int, str, bool]], headings: list[Heading],

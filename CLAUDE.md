@@ -8,14 +8,21 @@ Repo để ingest và improve spec automotive (Word → Markdown + ảnh).
 
 **Giai đoạn hiện tại:** Phase 0 (profile dữ liệu) → Phase 1 (vault) → Phase 2 (skills improve). RAG/chatbot để sau.
 
-## Chính sách dữ liệu và hai máy
+## Chính sách dữ liệu và hai repo
 
-- **Repo public (GitHub):** chỉ chứa code, skill, tri thức chung, tài liệu. **Không bao giờ chứa nội dung spec.**
-- **`data/`:** toàn bộ dữ liệu rút ra từ spec. Repo public luôn ignore thư mục này. Trên máy có dữ liệu, `data/` là **một git repo local riêng**.
-- **Máy phát triển:** viết code, push lên GitHub.
-- **Máy dữ liệu:** chỉ `git pull` repo public, không push. Làm việc với spec trong `data/`.
-- Claude Code được phép đọc và sửa spec trong `data/`. **Không** đưa nội dung spec vào dịch vụ bên ngoài khác (web search, WebFetch, API bên thứ ba, artifact công khai).
-- Không commit nội dung domain (trích spec, thuật ngữ riêng, lessons) vào repo public. Những thứ đó thuộc `data/knowledge/`.
+Cả hai repo đều nằm trên **GitLab nội bộ của công ty**. Không có remote nào ra ngoài.
+
+| | Repo code (`spec-garage`) | Repo dữ liệu (`data/`) |
+|---|---|---|
+| Chứa | code, skill, tri thức chung, tài liệu | spec gốc, vault, tri thức domain, report, eval |
+| Remote | `…/giangpth13/spec-garage.git` | `…/giangpth13/data.git` |
+| Nội dung spec | **không bao giờ** | đây là chỗ của nó |
+
+- **`data/` bị repo code ignore** (`.gitignore`) và là **một git repo riêng**. Hai repo không bao giờ trộn lịch sử với nhau.
+- Lý do giữ tách đôi (dù cả hai đều nội bộ): vòng đời review khác nhau, `data/` có ~370 file ảnh nhị phân, và baseline/tag của dữ liệu phải độc lập với lịch sử code.
+- Fixture test trong `tools/tests/fixtures/` **luôn là spec giả lập**, không bao giờ copy từ spec thật.
+- Không commit nội dung domain (trích spec, thuật ngữ riêng, lessons) vào repo code. Những thứ đó thuộc `data/knowledge/`.
+- Claude Code được phép đọc và sửa spec trong `data/`. **Không** đưa nội dung spec vào dịch vụ bên ngoài (web search, WebFetch, API bên thứ ba, artifact công khai).
 
 ## Ngôn ngữ
 
@@ -34,12 +41,12 @@ Spec hiện tại là tiếng Anh. Mọi output mà agent ghi vào `data/` đề
 
 | Đường dẫn | Repo | Vai trò |
 |---|---|---|
-| `specs.yaml` | public | Registry: mã spec ↔ file nguồn |
-| `knowledge/` | public | Tri thức **chung**: style guide, quality checklist, templates section |
-| `.claude/skills/` | public | Skill improve (chỉ chứa quy trình) |
-| `tools/` | public | CLI `sg`. `tools/specgarage/data_template/` là khung cho `data/` |
+| `specs.yaml` | code | Registry: mã spec ↔ file nguồn |
+| `knowledge/` | code | Tri thức **chung**: style guide, quality checklist, templates section |
+| `.claude/skills/` | code | Skill improve (chỉ chứa quy trình) |
+| `tools/` | code | CLI `sg`. `tools/specgarage/data_template/` là khung cho `data/` |
 | `data/sources/<CODE>/` | data | Spec gốc Word→md + ảnh. **Chỉ đọc** |
-| `data/vault/<CODE>/` | data | Obsidian vault, mỗi note là một section. Nguồn sự thật sau Phase 1. Mọi improve sửa ở đây |
+| `data/vault/<CODE>/` | data | Vault: thư mục markdown, mỗi note là một section. Nguồn sự thật sau Phase 1. Mọi improve sửa ở đây. Obsidian chỉ là **một trình xem tuỳ chọn**, không phải thành phần của pipeline |
 | `data/vault/<CODE>/_manifest.yaml` | data | Cây section, thứ tự, `next_id`, `retired`. Chỉ sửa qua `sg` |
 | `data/knowledge/` | data | Tri thức **domain**: `glossary.md`, `lessons.md` |
 | `data/reports/`, `data/evals/` | data | Output của profile/validate/skill; eval case |
@@ -52,7 +59,10 @@ Spec hiện tại là tiếng Anh. Mọi output mà agent ghi vào `data/` đề
   - Không bao giờ đổi hoặc dùng lại ID. ID không mang ý nghĩa: số heading nằm ở `legacy_number`.
 - **Tên file note:** chỉ là ID, ví dụ `data/vault/WRN/WRN-0342.md`. Tiêu đề nằm trong `title` và `aliases`.
 - **Heading con trong note:** ngay dưới heading có dòng `<!-- id: WRN-0345 | legacy: 3.2.4.1 | anchors: _Ref512349999 -->`.
-- **Link:** `[[WRN-0342|Tiêu đề]]`, hoặc `[[WRN-0342#Heading con|…]]`. Hyperlink Word (`#_Ref…`, `#_Toc…`) được resolve qua trường `anchors`.
+- **Link (Q5, đã chốt: markdown chuẩn):** `[Tiêu đề](WRN-0342.md)`, hoặc `[…](WRN-0342.md#heading-con-slug)`. Không dùng wikilink `[[…]]`: VS Code, GitLab và mọi renderer đều hiểu link markdown, và export gần như không phải chuyển đổi.
+  - **`sg build-vault` KHÔNG viết lại link** (quyết định T2-lite). Link trong note giữ **nguyên văn như trong source** (`#slug`, `#_Ref…`), kèm `_anchors.yaml` ánh xạ `anchor → ID` do build sinh ra.
+  - Việc đổi link sang dạng trỏ tới note là bước riêng **`sg relink`**, chạy sau khi vault đã được kiểm chứng. Lý do: tách rủi ro "link resolve sai đích" ra khỏi bước build, và giữ round-trip của `sg export` gần như hiển nhiên.
+  - Link không resolve được: **giữ nguyên link gốc**, gắn `#broken-ref`. **Không bao giờ đoán đích.**
 - **Frontmatter:** `id, spec, title, aliases, legacy_number, heading_path, level, anchors, refs_out, status, derived_from`.
   - `status` nhận một trong: `original | proposed | reviewed | approved`.
   - `refs_out` do script sinh, không sửa tay.
@@ -77,15 +87,17 @@ Spec hiện tại là tiếng Anh. Mọi output mà agent ghi vào `data/` đề
 Chạy từ gốc repo:
 
 ```bash
-uv run --project tools sg init-data [--migrate-legacy]              # máy dữ liệu: tạo data/ (git repo local)
+uv run --project tools sg init-data [--migrate-legacy]              # tạo data/ (git repo riêng)
 uv run --project tools sg specs                                     # kiểm tra registry và file nguồn
 uv run --project tools sg profile --out data/reports/profile.txt    # Phase 0
 uv run --project tools sg profile --diagnose                         # giải thích anchor chưa resolve (không lộ chữ)
 uv run --project tools sg new-id WRN [-n 3]                         # cấp ID mới
+uv run --project tools sg build-vault [CODE…] [--dry-run|--force]   # T2: sources → vault (445 note)
 uv run --project tools --group dev pytest tools/tests               # test tools
 ```
 
-Các lệnh `build-vault`, `get`, `related`, `validate`, `export` đã có chỗ trong CLI nhưng chưa implement (Phase 1).
+Các lệnh `get`, `related`, `validate`, `export`, `relink` đã có chỗ trong CLI nhưng chưa implement (Phase 1). 
+**Ngưỡng tách note (D1, đã chốt): 3000 token** cho cả ba spec → 445 note, p90 ≈ 2.2k token.
 
 ## Definition of done (mọi commit/PR tính năng)
 
@@ -103,11 +115,11 @@ Commit chỉ có code thì **chưa xong**. Mỗi task phải kèm:
 
 ## Git
 
-**Repo public:**
+**Repo code:**
 - `main` luôn là bản đã duyệt.
-- Mỗi ticket là một branch `phase1/<ticket>-<mô-tả>` và một PR.
+- Mỗi ticket là một branch `phase1/<ticket>-<mô-tả>`, merge vào `main` sau khi review.
 
-**Repo `data/` (local):**
+**Repo `data/`:**
 - `main` luôn là bản đã được expert duyệt.
 - Mỗi lần improve là một branch `improve/<ID>-<mô-tả>`.
-- Tag `baseline-original` được gắn ngay sau lần build vault đầu tiên được duyệt. Đây là bản "before", không được viết lại.
+- Tag `baseline-original` được gắn ngay sau lần build vault đầu tiên được duyệt. Đây là bản "before", không được viết lại. Sau tag này **không bao giờ chạy lại `build-vault`**; mọi cải thiện link là `sg relink` tại chỗ và phải áp lên cả baseline (tag mới, ví dụ `baseline-relinked-1`).

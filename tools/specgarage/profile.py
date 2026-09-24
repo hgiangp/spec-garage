@@ -13,18 +13,14 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from .notes import CHARS_PER_TOKEN, plan_notes, tokens  # noqa: F401  (re-exported: the split lives in notes.py)
 from .parse import MD_LINK_RE, HTML_LINK_RE, Document, parse_file
 
-CHARS_PER_TOKEN = 4
 SAMPLE_LIMIT = 10
 DIAGNOSE_LIMIT = 15
 # Document numbers of this spec family, e.g. 7820ZXXXXG000 (4 digits, Z, 4 chars, letter, 3 digits).
 DOC_NO_RE = re.compile(r"\b\d{4}Z[A-Z0-9]{4}[A-Z]\d{3}\b")
 SLUG_LIKE_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)+$")
-
-
-def tokens(chars: int) -> int:
-    return round(chars / CHARS_PER_TOKEN)
 
 
 def percentiles(values: list[int]) -> dict[str, int]:
@@ -36,30 +32,6 @@ def percentiles(values: list[int]) -> dict[str, int]:
         return v[min(len(v) - 1, int(q * len(v)))]
 
     return {"n": len(v), "min": v[0], "p50": pick(0.5), "p90": pick(0.9), "max": v[-1]}
-
-
-def plan_notes(doc: Document, max_tokens: int) -> list[tuple[int | None, int]]:
-    """Simulate the D1 split: descend until a subtree fits. Returns (heading index, tokens) per note.
-
-    A heading whose subtree is too big becomes a note holding only its own text, and its children
-    are split further. Text before the first heading is one note with index None.
-    """
-    notes: list[tuple[int | None, int]] = []
-    if doc.preamble_chars and doc.headings:
-        notes.append((None, tokens(doc.preamble_chars)))
-
-    def visit(idx: int) -> None:
-        h = doc.headings[idx]
-        if tokens(h.subtree_chars) <= max_tokens or not h.children:
-            notes.append((idx, tokens(h.subtree_chars)))
-            return
-        notes.append((idx, tokens(h.own_chars)))
-        for c in h.children:
-            visit(c)
-
-    for r in doc.roots:
-        visit(r.index)
-    return notes
 
 
 def heading_label(doc: Document, idx: int | None) -> str:
@@ -171,13 +143,16 @@ def profile_docs(docs: list[Document], thresholds: list[int], diagnose: bool = F
         split = {}
         for t in thresholds:
             notes = plan_notes(d, t)
-            sizes = [n for _, n in notes]
-            over = sorted((n for n in notes if n[1] > t), key=lambda n: -n[1])
+            sizes = [tokens(n.chars) for n in notes]
+            over = sorted((n for n in notes if tokens(n.chars) > t), key=lambda n: -n.chars)
             split[str(t)] = {
                 "notes": len(notes),
                 "tokens": percentiles(sizes),
                 "over_threshold": len(over),
-                "over_sample": [{"heading": heading_label(d, i), "tokens": n} for i, n in over[:SAMPLE_LIMIT]],
+                "over_sample": [
+                    {"heading": heading_label(d, n.heading), "tokens": tokens(n.chars)}
+                    for n in over[:SAMPLE_LIMIT]
+                ],
                 "tiny_under_50": sum(1 for s in sizes if s < 50),
             }
 
