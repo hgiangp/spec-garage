@@ -287,7 +287,9 @@ Bước riêng, **sửa tại chỗ** trong vault, chỉ động vào link:
 
   Chạy trên fixture, và trên spec thật ở §4.
 
-### T4: `validate.py` (`sg validate [CODE…] [--json]`, exit ≠ 0 nếu có lỗi)
+### T4: `validate.py` (`sg validate [CODE…] [--json] [--fix-refs]`, exit ≠ 0 nếu có lỗi) ✅
+
+> Xong (branch `phase1/t4-validate`). Guide: [`guides/validate.md`](guides/validate.md). V08 được hiểu là: dòng có `#broken-ref` thì link trên dòng đó chỉ là warning, không phải V04 error.
 
 | Mã | Kiểm tra                                                                                          | Mức    |
 | --- | -------------------------------------------------------------------------------------------------- | ------- |

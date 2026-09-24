@@ -188,7 +188,12 @@ def classify_link(target: str) -> tuple[str, str | None, str | None]:
 
 
 def parse_file(path: Path) -> Document:
-    text = path.read_text(encoding="utf-8-sig", errors="replace")  # BOM-safe (Windows)
+    return parse_text(path.read_text(encoding="utf-8-sig", errors="replace"), path)  # BOM-safe (Windows)
+
+
+def parse_text(text: str, path: Path) -> Document:
+    """Parse markdown already in memory, e.g. the body of a vault note without its frontmatter.
+    `path` is only used to resolve relative image paths and in messages."""
     lines = text.splitlines()
 
     headings: list[Heading] = []

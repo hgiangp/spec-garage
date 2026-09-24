@@ -76,7 +76,7 @@ Spec hiện tại là tiếng Anh. Mọi output mà agent ghi vào `data/` đề
 1. **Không bịa giá trị.** Thiếu thông tin thì ghi `> [!todo] ASSUMPTION: …` để expert điền.
 2. **Không đổi ngữ nghĩa** (giá trị, điều kiện, thứ tự hành vi) nếu chưa được expert xác nhận. Mỗi lần improve là một branch trong repo `data/` để review bằng `git diff`.
 3. **Giữ nguyên ID, anchors, legacy_number.** Không xoá comment `<!-- id: … -->`.
-4. Chạy `sg validate` sau mỗi lần sửa (khi đã implement).
+4. Chạy `sg validate` sau mỗi lần sửa: phải 0 error.
 5. Trước khi sửa, đọc:
    - `knowledge/style-guide.md`
    - `data/knowledge/glossary.md`
@@ -94,10 +94,11 @@ uv run --project tools sg profile --diagnose                         # giải th
 uv run --project tools sg new-id WRN [-n 3]                         # cấp ID mới
 uv run --project tools sg build-vault [CODE…] [--dry-run|--force]   # T2: sources → vault (445 note)
 uv run --project tools sg export [CODE…] --check                    # T5: vault → build/export/, so round-trip với source
+uv run --project tools sg validate [CODE…] [--fix-refs]             # T4: kiểm V01–V10, exit 1 nếu có error
 uv run --project tools --group dev pytest tools/tests               # test tools
 ```
 
-Các lệnh `get`, `related`, `validate`, `relink` đã có chỗ trong CLI nhưng chưa implement (Phase 1). 
+Các lệnh `get`, `related`, `relink` đã có chỗ trong CLI nhưng chưa implement (Phase 1). 
 **Ngưỡng tách note (D1, đã chốt): 3000 token** cho cả ba spec → 445 note, p90 ≈ 2.2k token.
 
 ## Definition of done (mọi commit/PR tính năng)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -12,13 +13,13 @@ from .config import DATA_DIR, find_root, load_specs
 from .export import ExportError, export_vault
 from .ids import IdError, allocate_ids
 from .init_data import init_data
+from .validate import RULES, ValidateError, validate
 from .notes import SplitError
 
 PLANNED = {
     "relink": "Phase 1: rewrite in-vault links to markdown links pointing at note IDs, in place (run after build-vault)",
     "get": "Phase 1: print a section by ID with its breadcrumb",
     "related": "Phase 1: sections an ID links to / is linked from",
-    "validate": "Phase 1: broken links, duplicate IDs, manifest drift, table column mismatches",
 }
 
 
@@ -83,6 +84,35 @@ def cmd_export(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+def cmd_validate(args: argparse.Namespace) -> int:
+    try:
+        report = validate(find_root(), args.codes, args.fix_refs)
+    except ValidateError as e:
+        print(e, file=sys.stderr)
+        return 1
+    if args.json:
+        print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+        return 1 if report.errors else 0
+
+    for code, n in report.notes.items():
+        print(f"{code}: {n} notes checked")
+    by_rule: dict[str, list] = {}
+    for f in report.findings:
+        by_rule.setdefault(f.rule, []).append(f)
+    for rule in sorted(by_rule):
+        items = by_rule[rule]
+        print(f"{rule} {items[0].level:<7} {len(items):>5}  {RULES[rule]}")
+        for f in items if args.all else items[:args.limit]:
+            where = f"{f.path}:{f.line}" if f.line else f.path
+            print(f"    {where}  {f.message}")
+        if not args.all and len(items) > args.limit:
+            print(f"    … {len(items) - args.limit} more (use --all)")
+    if report.fixed:
+        print(f"fixed refs_out in {report.fixed} note(s)")
+    print(f"summary: {report.errors} error(s), {report.warnings} warning(s)")
+    return 1 if report.errors else 0
+
+
 def cmd_new_id(args: argparse.Namespace) -> int:
     try:
         ids = allocate_ids(find_root(), args.code, args.n)
@@ -135,6 +165,14 @@ def build_parser() -> argparse.ArgumentParser:
                    help="compare the export with the source (round trip, ignoring blank lines); exit 1 on a difference")
     p.add_argument("--out-dir", type=Path, help="directory to write to (default: build/export/)")
     p.set_defaults(func=cmd_export)
+
+    p = sub.add_parser("validate", help="Phase 1: check the vault against the conventions (V01-V10); exit 1 on errors")
+    p.add_argument("codes", nargs="*", help="spec codes to check (default: every spec that has a vault)")
+    p.add_argument("--json", action="store_true", help="output JSON")
+    p.add_argument("--fix-refs", action="store_true", help="rewrite refs_out in frontmatter to match the links (V10)")
+    p.add_argument("--limit", type=int, default=10, help="findings shown per rule (default 10)")
+    p.add_argument("--all", action="store_true", help="show every finding")
+    p.set_defaults(func=cmd_validate)
 
     p = sub.add_parser("new-id", help="allocate new section IDs from next_id in data/vault/<CODE>/_manifest.yaml")
     p.add_argument("code", help="spec code, e.g. WRN")
