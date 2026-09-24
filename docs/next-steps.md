@@ -20,14 +20,18 @@
 
 ## §0. Trước khi bắt đầu (bắt buộc)
 
-### 0.1 Mô hình hai máy (đã chốt)
+### 0.1 Mô hình hai repo (cập nhật 2026-09-23)
 
-| Máy | Làm gì | Git |
+> **Đã đổi.** Trước đây repo code nằm public trên GitHub và máy dữ liệu chỉ được pull, code chuyển đi bằng `git bundle`. Nay **cả hai repo đều ở GitLab nội bộ**, một máy làm được cả hai việc, push trực tiếp. Mọi hướng dẫn về "máy phát triển / máy dữ liệu" và `git bundle` bên dưới chỉ còn giá trị lịch sử.
+
+| Repo | Làm gì | Remote |
 |---|---|---|
-| **Máy phát triển** | Code `tools/`, skill, tài liệu | Push lên GitHub (repo **public**) |
-| **Máy dữ liệu** | Chạy `sg` trên spec thật, build vault, improve, review | **Chỉ pull** repo public. Dữ liệu nằm trong `data/`: một git repo local riêng |
+| **`spec-garage`** | Code `tools/`, skill, tài liệu | GitLab nội bộ `…/giangpth13/spec-garage.git` |
+| **`data/`** | Spec gốc, vault, tri thức domain, report, eval | GitLab nội bộ `…/giangpth13/data.git` |
 
-- Repo public ignore `/data/` (và các vị trí cũ `/sources/`, `/vault/`, `/reports/`, `/evals/`). Không bao giờ `git add -f` các đường dẫn đó.
+Vẫn giữ tách đôi vì: vòng đời review khác nhau, `data/` có ~370 file ảnh, baseline tag phải độc lập với lịch sử code.
+
+- Repo code ignore `/data/` (và các vị trí cũ `/sources/`, `/vault/`, `/reports/`, `/evals/`). Không bao giờ `git add -f` các đường dẫn đó.
 - Mọi thứ rút ra từ spec đều nằm trong `data/`: spec gốc, vault, **glossary và lessons**, report, eval.
 - Nếu có git server nội bộ thì `data/` có thể push lên đó. **Không bao giờ push lên remote public.**
 - Lý do không dùng một git repo thứ hai phủ lên các thư mục rải rác ở gốc: repo thứ hai vẫn phải đọc `.gitignore` của repo public, và không có cách tắt quy tắc đó. Gom mọi thứ vào `data/` thì hai repo tách bạch hoàn toàn.
@@ -131,16 +135,16 @@ Nếu Phase 0 cho thấy converter xuất định dạng khác với những gì
 
 ### 2.4 Done khi
 
-- [ ] Profile chạy trên cả 3 spec, không có lỗi.
-- [ ] Định dạng anchor đã được parser nhận ra; `internal_unresolved` ở mức chấp nhận được.
-- [ ] Đã chốt ngưỡng D1 và cách lấy `legacy_number`.
-- [ ] Đã có danh sách spec ngoài phạm vi.
+- [x] Profile chạy trên cả 3 spec, không có lỗi.
+- [x] Định dạng anchor đã được parser nhận ra; `internal_unresolved` = **0** trên cả ba spec.
+- [x] Đã chốt ngưỡng D1 (**3000**) và cách lấy `legacy_number` (đọc từ tiêu đề).
+- [x] Đã có danh sách spec ngoài phạm vi: chỉ `7822ZXXXXA000`, được EWA nhắc 1 lần ở dạng chữ. Không thêm vào registry.
 
 ---
 
 ## §3. Phase 1: implement công cụ vault
 
-Thứ tự đề xuất: **T1 → T2 → T5 → T4 → T3 → T6** (T1 và T6 đã xong), với T7 (test) đi kèm từng ticket. T1 bắt đầu được ngay, không cần chờ Phase 0.
+Thứ tự đề xuất: **T1 → T2 → T5 → T4 → T3 → (Gate B, tag baseline) → T2b relink** (T1 và T6 đã xong), với T7 (test) đi kèm từng ticket.
 
 ### Định dạng dữ liệu (hợp đồng chung)
 
@@ -162,7 +166,9 @@ derived_from: []
 ---
 ### 3.2.4 Buzzer Parameters
 
-Nội dung… xem [[WRN-0120|Buzzer Timing]]. <!-- anchor: _Ref512345678 -->
+Nội dung… xem [Buzzer Timing](#_Ref512340000).
+
+<span id="_Ref512345678" class="anchor"></span>Table 3‑4 Buzzer parameters
 
 #### 3.2.4.1 Timing constraints
 <!-- id: WRN-0343 | legacy: 3.2.4.1 | anchors: _Ref512349999 -->
@@ -170,11 +176,14 @@ Nội dung… xem [[WRN-0120|Buzzer Timing]]. <!-- anchor: _Ref512345678 -->
 ![](../attachments/WRN/image12.png)
 ```
 
+Sau `sg relink` (T2b), dòng link trên thành `[Buzzer Timing](WRN-0120.md)`. Trước đó nó **y như trong source**. Anchor (`<span id>`, anchor trên dòng heading) luôn giữ nguyên văn.
+
 Quy tắc:
 
 - **Giữ nguyên cấp heading gốc** (không đưa về H1), để export chỉ cần nối các note lại.
-- **Xoá cú pháp anchor khỏi dòng heading**, vì đã ghi trong metadata.
-- **Anchor trong body** đổi thành `<!-- anchor: _Ref… -->` tại đúng vị trí: không hiển thị nhưng vẫn giữ được.
+- **Anchor giữ nguyên văn**, cả trên dòng heading lẫn trong body (`<span id=… class="anchor"></span>`). Anchor của converter vốn là thẻ rỗng, không hiển thị, nên đổi sang comment chỉ thêm rủi ro. Danh sách anchor của note nằm trong frontmatter `anchors`. *(Lệch so với bản đầu của đặc tả, đã chốt khi làm T2.)*
+- **Thứ duy nhất build chèn thêm** là dòng `<!-- id: … -->` ngay dưới mỗi heading con (heading không phải heading gốc của note).
+- **Link giữ nguyên văn** ở bước build (xem T2). Sau `relink` thì là link markdown `[text](<ID>.md)`, không dùng wikilink.
 - **Ảnh** dùng link markdown tương đối `../attachments/<CODE>/<file>`, không dùng `![[…]]`: hiển thị được cả trong Obsidian lẫn renderer khác, và giữ alt text. (Điều chỉnh so với D3; cập nhật D3 khi merge T2.)
 - **Preamble** (nội dung trước heading đầu tiên, ví dụ trang kiểm soát tài liệu) là note `<CODE>-0000`.
 
@@ -209,42 +218,70 @@ retired: []                # { id, merged_into | reason }
 - Iterator trên cây manifest (thứ tự, cha/con).
 - **Test:** cấp liên tiếp, không cấp lại ID đã retire, `id_width` 4 và 5, báo lỗi khi tràn.
 
-### T2: `build_vault.py` (`sg build-vault [CODE…] [--max-tokens N] [--force]`)
+### T2: `build_vault.py` (`sg build-vault [CODE…] [--max-tokens N] [--force]`) ✅
 
-1. Parse **tất cả** spec trong registry trước (cần cho resolve cross-file), dựng bản đồ toàn cục `anchor → (CODE, heading index)`.
+> Xong (branch `phase1/t2-vault-decisions`). Guide: [`guides/build-vault.md`](guides/build-vault.md). Trên spec thật: 445 note, nối lại ra đúng văn bản gốc.
+
+> **Phạm vi đã thu hẹp (chốt 2026-09-23): "T2-lite".** Build **không viết lại link**. Việc đó là ticket riêng T2b `sg relink`.
+> Lý do: viết lại link là phần rủi ro nhất (link resolve sai đích thì mất dữ liệu ngầm, khó phát hiện) và cũng là phần làm `sg export` khó round-trip. Tách ra thì build + export chứng minh được gần như hiển nhiên, và Gate B tới sớm hơn.
+
+1. Parse spec trong registry, dựng bản đồ `anchor → heading index` **trong từng spec**. (Không có link cross-file: profile đo được 0 trên cả ba spec.)
 2. Gán ID cho mọi heading theo thứ tự tài liệu, bắt đầu từ `0001`. Preamble là `0000`.
-3. Chọn note root: refactor `profile.plan_notes` để trả về **danh sách heading index** thay vì chỉ kích thước. Profile và build phải dùng chung một thuật toán.
+3. Chọn note root: refactor `profile.plan_notes` để trả về **danh sách heading index** thay vì chỉ kích thước. Profile và build phải dùng chung một thuật toán, ngưỡng mặc định **3000**.
 4. Với mỗi note:
    - Viết frontmatter như định dạng trên.
    - Chèn comment ID cho heading con.
-   - Đổi anchor trong body sang dạng comment.
-5. Viết lại link:
-   - `#_Ref…` (cùng spec) → `[[<note ID>|text]]` nếu anchor thuộc heading gốc của note, hoặc `[[<note ID>#<tiêu đề heading con>|text]]` nếu thuộc heading con.
-   - Cross-file: resolve qua bản đồ toàn cục (khớp theo stem, rồi theo `doc_no`, giống `profile`).
-   - Không resolve được: giữ link gốc và thêm ` #broken-ref`.
-6. Copy ảnh vào `data/vault/attachments/<CODE>/` và viết lại đường dẫn.
-7. Ghi `_manifest.yaml` và sinh `_toc.md` (danh sách lồng nhau `[[ID|legacy title]]`).
+   - Giữ nguyên anchor (không đổi sang comment).
+5. **Link: giữ nguyên văn.** Không đụng vào `[text](#slug)` hay `[text](#_Ref…)`. Thay vào đó build sinh `data/vault/<CODE>/_anchors.yaml`:
+   ```yaml
+   spec: WRN
+   anchors:            # anchor (tường minh hoặc slug heading) → ID của heading sở hữu nó
+     _Ref512345678: WRN-0345
+     buzzer-parameters: WRN-0342
+   notes:              # heading ID → ID của note chứa heading đó (chỉ ghi khi hai cái khác nhau)
+     WRN-0345: WRN-0342
+   ```
+   Muốn biết note đích của một anchor: `notes.get(anchors[a], anchors[a])`.
+   Đây là đầu vào của T2b `relink`, của `sg related` và của `validate` (kiểm link gãy mà không cần link đã được viết lại).
+6. Copy ảnh vào `data/vault/attachments/<CODE>/` và viết lại đường dẫn ảnh (đây là thứ **duy nhất** build được phép viết lại, vì file đã đổi chỗ thật).
+7. Ghi `_manifest.yaml` và sinh `_toc.md` (danh sách lồng nhau, link markdown `[legacy title](ID.md)`).
 8. **An toàn:**
    - Từ chối ghi đè `data/vault/<CODE>/` đã tồn tại nếu không có `--force`.
    - Nếu tag `baseline-original` đã tồn tại trong repo `data/` thì từ chối kể cả khi có `--force`, trừ khi có thêm `--i-know-baseline-exists`.
 9. `legacy_number` lấy từ tiêu đề: Phase 0 cho thấy ≥ 98.6 % heading có số. Heading không có số thì để trống.
 10. **Từ Phase 0** ([phase0-findings.md](phase0-findings.md)):
-    - Dòng chỉ có anchor nằm ngay trước heading (`placement: before_heading`) được **chuyển vào note của heading đó**. Nội dung của anchor giữ ở dạng `<!-- anchor: … -->` ngay trên hoặc dưới heading, không để lại ở cuối note phía trước.
-    - Link tới slug tiêu đề (anchor ngầm) cũng được đổi sang `[[ID]]`, giống link `_Ref`.
+    - Dòng chỉ có anchor nằm ngay trước heading (`placement: before_heading`) được **chuyển vào note của heading đó**, giữ nguyên văn, không để lại ở cuối note phía trước.
     - Không cắt giữa bảng HTML (`<table>…</table>`). Bảng HTML được giữ nguyên văn.
+    - **Preamble của WRN là mục lục và nặng ~16.5k token** (EWA ~5.7k). Nó luôn vượt mọi ngưỡng — đó là chuyện bình thường, giữ nguyên văn làm note `-0000`, skill bỏ qua note này. Không tách mục lục.
+
+### T2b: `relink.py` (`sg relink [CODE…] [--dry-run] [--report]`) — sau Gate B
+
+Bước riêng, **sửa tại chỗ** trong vault, chỉ động vào link:
+
+- Đọc `_anchors.yaml` của từng spec. Với mỗi link `[text](#anchor)`:
+  - anchor thuộc heading gốc của note đích → `[text](<ID>.md)`;
+  - anchor thuộc heading con → `[text](<ID>.md#<slug của heading con>)`;
+  - không resolve được → **giữ nguyên link gốc**, thêm `#broken-ref`. Không bao giờ đoán đích.
+- `--dry-run` in thống kê (resolve được bao nhiêu, gãy bao nhiêu) mà không sửa file.
+- Chạy được nhiều lần, kết quả không đổi (idempotent): link đã ở dạng `<ID>.md` thì bỏ qua.
+- **Sau `baseline-original`:** mỗi lần relink phải áp lên **cả baseline** và gắn tag mới (`baseline-relinked-1`), nếu không phép so sánh before/after sẽ lệch.
 
 ### T5: `export.py` (`sg export <CODE> [--keep-ids]`)
 
 - Nối các note theo thứ tự `tree`, bỏ frontmatter.
-- Đổi `[[ID…|text]]` về `[text](#<anchor đầu tiên của đích>)` (cross-file thì là `<file gốc>.docx#…`).
-- Đổi `<!-- anchor: X -->` về cú pháp anchor gốc, và trả đường dẫn ảnh về như cũ.
+- **Bỏ các dòng `<!-- id: … -->`** mà build chèn dưới heading con (với `--keep-ids` thì giữ).
+- Trả đường dẫn ảnh `../attachments/<CODE>/<file>` về đường dẫn gốc trong source (ví dụ `images/media/<file>`). Đường dẫn gốc lấy từ source (`source` trong manifest), vì build chỉ giữ tên file.
+- Anchor: không phải làm gì, vì build giữ nguyên văn.
+- Link: **nếu vault chưa relink thì không phải làm gì** (link vốn là nguyên văn). Nếu đã relink thì đổi `[text](<ID>.md#…)` ngược về `[text](#<anchor đầu tiên của đích>)`.
 - Ghi ra `build/export/<CODE>.md`.
 - **Test round-trip (bắt buộc):** `export(build(source))` phải bằng `source` sau khi chuẩn hoá. Chuẩn hoá gồm:
 
-  - Link được so theo **section đích đã resolve**, không so theo cú pháp.
-  - Bỏ cú pháp anchor.
   - Đường dẫn ảnh so theo tên file.
+  - Dòng trống (build có thể thêm/bớt dòng trống ở ranh giới note).
   - Khoảng trắng cuối dòng.
+  - (Chỉ khi đã relink) link so theo **section đích đã resolve**, không so theo cú pháp.
+
+  Với vault chưa relink, round-trip gần như là "nối các note lại phải ra đúng file gốc" — dễ chứng minh, và đó chính là lý do tách `relink` ra.
 
   Chạy trên fixture, và trên spec thật ở §4.
 
@@ -255,8 +292,8 @@ retired: []                # { id, merged_into | reason }
 | V01 | Frontmatter đủ trường bắt buộc;`id` trùng tên file; `spec` trùng thư mục            | error   |
 | V02 | ID duy nhất trên toàn vault (note và comment heading con); đúng format                       | error   |
 | V03 | Note khớp với manifest hai chiều; mọi ID <`next_id`; ID đã retire không còn xuất hiện  | error   |
-| V04 | Wikilink resolve được (note tồn tại;`#heading` tồn tại trong note đích)                 | error   |
-| V05 | Mọi heading con có comment ID; không còn cú pháp anchor thô (`[]{#`, `{#_`, `<a id=`) | error   |
+| V04 | Link resolve được: link dạng`#anchor` phải có trong `_anchors.yaml`; link dạng `<ID>.md` phải có note đích, `#heading` phải tồn tại trong note đó | error   |
+| V05 | Mọi heading con (không phải heading gốc của note) có đúng một dòng `<!-- id: … -->` ngay dưới, và ID trong đó khớp với manifest / `_anchors.yaml`. **Anchor thô được phép** (build giữ nguyên văn) | error   |
 | V06 | Ảnh được tham chiếu tồn tại                                                                 | error   |
 | V07 | `status` hợp lệ; `derived_from` / `merged_into` trỏ tới ID có thật                     | error   |
 | V08 | Link còn gắn`#broken-ref`                                                                      | warning |
@@ -271,8 +308,8 @@ Có `--fix-refs` để cập nhật lại `refs_out`. Đây là thứ duy nhất
   - In ra breadcrumb (`heading_path`) rồi đến nội dung.
   - Nếu ID là heading con, chỉ in phần đó kèm breadcrumb của note chứa nó.
 - `sg related <ID> [--depth 1] [--json]`:
-  - **out:** các link đi ra từ ID.
-  - **in:** grep `[[ID` trên toàn vault.
+  - **out:** các link đi ra từ ID, resolve qua `_anchors.yaml` (chạy được cả khi chưa relink).
+  - **in:** đảo ngược bản đồ đó — các note có link trỏ tới anchor thuộc ID.
   - Mỗi mục in ID, spec, tiêu đề, số token ước lượng. Không in nội dung, để agent tự `sg get` khi cần.
 
 ### T6: `sg new-id <CODE> [-n N]` ✅
@@ -305,11 +342,11 @@ Wrapper CLI của `ids.allocate`, cần cho các skill khi tạo heading mới. 
    uv run --project tools sg validate
    uv run --project tools sg export WRN   # và EWA, LIN; so sánh round-trip
    ```
-2. **Expert mở `data/vault/` trong Obsidian** và kiểm tra khoảng 10 note ngẫu nhiên mỗi spec:
+2. **Expert mở `data/vault/`** (VS Code, GitLab web hoặc Obsidian, tuỳ ý) và kiểm tra khoảng 10 note ngẫu nhiên mỗi spec:
    - Ranh giới note hợp lý chưa?
-   - Link bấm được, đúng đích?
    - Ảnh hiển thị?
    - Bảng còn nguyên?
+   - *Chưa* kiểm link bấm được hay đúng đích: link chỉ được viết lại ở T2b, việc kiểm link thuộc Gate D (`handoff.md` §6).
 3. Sửa parser hoặc build nếu cần (kèm fixture tái hiện lỗi), rồi build lại với `--force`.
 4. **Gắn baseline (bản "before")** trong repo `data/`:
    ```bash
@@ -339,9 +376,10 @@ Wrapper CLI của `ids.allocate`, cần cho các skill khi tạo heading mới. 
 
 | # | Câu hỏi                                                                   | Người quyết     | Cần trước |
 | - | --------------------------------------------------------------------------- | ------------------ | ------------ |
-| 1 | ~~Chuyển repo sang private?~~ **Đã chốt:** giữ public, dữ liệu trong `data/` trên máy dữ liệu | Chủ repo | — |
-| 2 | Định dạng anchor thực tế của converter                                | Phase 0            | T2           |
-| 3 | Ngưỡng tách D1 (theo từng spec?)                                        | Chủ repo + expert | T2           |
+| 1 | ~~Chuyển repo sang private?~~ **Đã chốt 2026-09-23:** cả hai repo chuyển sang GitLab nội bộ, vẫn tách đôi | Chủ repo | — |
+| 2 | ~~Định dạng anchor thực tế của converter~~ **Đã xong (P0.5):** slug kiểu pandoc + `<span id>` cho caption; 0 link unresolved trên cả ba spec | Phase 0            | T2           |
+| 3 | ~~Ngưỡng tách D1~~ **Đã chốt: 3000** cho cả ba spec                     | Chủ repo + expert | T2           |
+| 3b | ~~Cú pháp link trong vault~~ **Đã chốt:** markdown chuẩn, và build không relink (T2-lite) | Chủ repo | T2 |
 | 4 | Spec ngoài bộ 3 được tham chiếu: thêm vào registry hay để ngoài? | Expert             | T2           |
 | 5 | Quy ước đặt tên parameter và state (`glossary.md` › Naming)        | Expert             | §5 bước 3 |
 | 6 | Người review, nhịp review (D10)                                          | Chủ repo          | §5          |
@@ -363,3 +401,4 @@ Yêu cầu:
 - Theo "Definition of done" trong CLAUDE.md: cập nhật docs/tasks.md và docs/guides/<tính-năng>.md (tính năng làm gì, cách dùng, quy tắc, giới hạn, test).
 - Kết thúc: tóm tắt thay đổi, các điểm lệch khỏi đặc tả (nếu có) và lý do.
 ```
+ 

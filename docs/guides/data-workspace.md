@@ -9,30 +9,32 @@
 
 ## Tính năng làm gì
 
-Spec là tài liệu mật, còn repo GitHub là **public**. Mọi thứ rút ra từ spec được gom vào một thư mục `data/`:
-- Repo public **luôn ignore** `data/`.
-- Trên máy dữ liệu, `data/` là **một git repo local riêng**.
+Spec là tài liệu mật. Mọi thứ rút ra từ spec được gom vào một thư mục `data/`:
+- Repo code **luôn ignore** `data/`.
+- `data/` là **một git repo riêng**, remote trỏ tới GitLab nội bộ.
 
 `sg init-data` dựng thư mục này từ khung có sẵn.
 
-| Máy | Làm gì | Git |
+| Repo | Chứa | Remote |
 |---|---|---|
-| 💻 Máy phát triển | Code, skill, tài liệu | Push lên GitHub |
-| 🗄️ Máy dữ liệu | Chạy `sg` trên spec thật, build vault, improve, review | **Chỉ pull** repo public. Commit trong `data/` |
+| `spec-garage` | Code, skill, tri thức chung, tài liệu | GitLab nội bộ `…/spec-garage.git` |
+| `data/` | Spec gốc, vault, tri thức domain, report, eval | GitLab nội bộ `…/data.git` |
+
+> Cập nhật 2026-09-23: trước đây repo code nằm public trên GitHub và máy dữ liệu chỉ được pull. Nay cả hai repo đều nội bộ, một máy làm được cả hai việc.
 
 ### Vì sao gom vào `data/` thay vì để `sources/`, `vault/`… ở gốc?
 
-Một git repo thứ hai phủ lên các thư mục rải rác ở gốc vẫn phải đọc `.gitignore` của repo public, và git không có tuỳ chọn tắt việc này. Kết quả là repo dữ liệu cũng không thấy các file bị ignore. Gom vào `data/` thì hai repo tách bạch hoàn toàn.
+Một git repo thứ hai phủ lên các thư mục rải rác ở gốc vẫn phải đọc `.gitignore` của repo code, và git không có tuỳ chọn tắt việc này. Kết quả là repo dữ liệu cũng không thấy các file bị ignore. Gom vào `data/` thì hai repo tách bạch hoàn toàn.
 
 ## Cấu trúc `data/`
 
 ```
-data/                      git repo local, không có remote public
+data/                      git repo riêng, remote = GitLab nội bộ
 ├─ README.md  .gitignore
 ├─ sources/<CODE>/         spec gốc Word→md + folder ảnh (chỉ đọc)
-├─ vault/                  Obsidian vault (mở đúng thư mục này trong Obsidian)
-│  ├─ .obsidian/app.json   wikilink, không tự sửa link khi đổi tên
-│  ├─ <CODE>/              note + _manifest.yaml (sau T2)
+├─ vault/                  thư mục markdown (Obsidian chỉ là trình xem tuỳ chọn)
+│  ├─ .obsidian/app.json   link markdown, không tự sửa link khi đổi tên
+│  ├─ <CODE>/              note + _manifest.yaml + _anchors.yaml (sau T2)
 │  └─ attachments/<CODE>/
 ├─ knowledge/              glossary.md, lessons.md: tri thức DOMAIN
 ├─ reports/                profile, analyze, consistency, validate, review
@@ -41,7 +43,7 @@ data/                      git repo local, không có remote public
 
 ## Cách dùng
 
-### Lần đầu trên máy dữ liệu
+### Lần đầu
 
 ```bash
 git pull
@@ -58,10 +60,16 @@ created: data/sources/WRN/
 initialised local git repo: data/.git (no remote)
 ```
 
-Commit lần đầu trong repo dữ liệu:
+Commit lần đầu trong repo dữ liệu, rồi nối remote nội bộ:
 ```bash
-cd data && git add -A && git commit -m "Initial specs" && cd ..
+cd data
+git add -A && git commit -m "Initial specs"
+git remote add origin ssh://git@git3.fsoft.com.vn:2022/GROUP/NSAUTOTEST20/NSTMDCON/user/giangpth13/data.git
+git push -u origin main
+cd ..
 ```
+
+`sg init-data` cố tình **không** tự thêm remote: repo này chứa nội dung spec, nên việc nối nó với server nào phải do người làm, có ý thức.
 
 ### Tuỳ chọn
 
@@ -85,11 +93,10 @@ git tag baseline-original                   # một lần, sau build-vault đầ
 
 ## Quy tắc
 
-- **Không bao giờ** `git add -f` các đường dẫn `data/`, `sources/`, `vault/`, `reports/`, `evals/` trong repo public.
-- **Không sửa file của repo public trên máy dữ liệu**, nếu không `git pull` sẽ báo conflict. Nếu lỡ sửa (ví dụ `specs.yaml`): gửi thay đổi cho máy phát triển để commit, rồi chạy `git checkout -- <file>`.
+- **Không bao giờ** `git add -f` các đường dẫn `data/`, `sources/`, `vault/`, `reports/`, `evals/` trong repo code.
 - Nội dung trong `data/` (glossary, lessons, report, eval) viết bằng **tiếng Anh**.
-- `data/knowledge/` chứa tri thức domain. Quy tắc **chung**, không chứa nội dung spec, thì gửi về máy phát triển để đưa vào `knowledge/` hoặc skill.
-- Repo `data/` có thể push lên git server **nội bộ**, không bao giờ lên remote public.
+- `data/knowledge/` chứa tri thức domain. Quy tắc **chung**, không chứa nội dung spec, thì chuyển sang `knowledge/` hoặc skill của repo code.
+- Repo `data/` chỉ push lên GitLab **nội bộ**. Không bao giờ thêm remote ra ngoài.
 
 ## Giới hạn đã biết
 
@@ -108,3 +115,4 @@ Các trường hợp được test:
 - cảnh báo khi còn dữ liệu ở vị trí cũ;
 - migrate vào thư mục đích đã tồn tại sẵn;
 - `git init`.
+ 
