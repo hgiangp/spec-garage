@@ -26,10 +26,11 @@
 | T4 `validate` | ✅ branch `phase1/t4-validate`, [guide](guides/validate.md) |
 | T3 `get`/`related` | ✅ branch `phase1/t3-get-related`, [guide](guides/get-related.md) |
 | V1 (build + export --check + validate trên 3 spec thật) | ✅ 2026-09-24 |
-| **Việc tiếp theo** | **Gate B:** V2 expert xem note → V3 tag `baseline-original`. Rồi Gate C |
+| V2 (expert xem note), V3 (tag `baseline-original`) | ✅ 2026-09-24, `data/` commit `8e0bba9`. **Gate B đạt** |
+| **Việc tiếp theo** | **Gate C / Phase 2** (S1–S6) trên máy dữ liệu. T2b `relink` khi cần link bấm được |
 | T2b `relink` | ⏳ sau Gate B |
 
-`data/`: branch `main`, đã push lên GitLab. Chưa có tag `baseline-original`.
+`data/`: branch `main`, đã push lên GitLab. Tag **`baseline-original`** ở commit `8e0bba9` (bản "before"). Từ đây **không bao giờ chạy lại `build-vault`**; `sg build-vault` sẽ tự từ chối.
 
 ## 3. Quy trình convert (đã xác nhận với chủ repo)
 
@@ -89,7 +90,7 @@ Hệ quả:
 4. ✅ **T4 `validate`**. Trên dữ liệu thật: build + `export --check` OK cả ba spec; còn chạy `sg validate` (V1).
    ✅ **T3 `get`/`related`**. Phase 1 (công cụ ingest) hoàn tất.
    Tiếp: **V2** expert xem khoảng 10 note mỗi spec. Song song: **Gate A** (`spec-analyze`).
-5. Gate B → tag `baseline-original`.
+5. ✅ Gate B → tag `baseline-original` (`data/` commit `8e0bba9`).
 6. Gate C → Phase 2 (S1–S6 trong `tasks.md`).
 7. T2b `relink` → Gate D → tag `baseline-relinked-1`.
  

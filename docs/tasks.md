@@ -103,8 +103,8 @@ Nối note lại theo manifest ra **đúng** văn bản gốc trên cả ba spec
 | #  | Task                                                                            | Trạng thái | Máy          | Ghi chú                                                                              |
 | -- | ------------------------------------------------------------------------------- | ------------ | ------------- | ------------------------------------------------------------------------------------- |
 | V1 | `sg build-vault && sg export --check && sg validate` trên 3 spec | ✅ | 🗄️ | Round-trip OK và validate xong trên cả ba spec (2026-09-24) |
-| V2 | Expert kiểm tra khoảng 10 note mỗi spec (VS Code, GitLab web hoặc Obsidian) | ⏳           | 🗄️ + expert | Checklist: next-steps §4. Chưa kiểm link bấm được — link chỉ resolve sau T2b |
-| V3 | Tag`baseline-original` trong repo `data/`                                   | ⏳           | 🗄️          | **Bắt buộc có trước Phase 2**                                              |
+| V2 | Expert kiểm tra khoảng 10 note mỗi spec (VS Code, GitLab web hoặc Obsidian) | ✅ | 🗄️ + expert | Ranh giới note, bảng, ảnh, frontmatter, dòng id (2026-09-24). Link chưa kiểm: thuộc Gate D |
+| V3 | Tag `baseline-original` trong repo `data/` | ✅ | 🗄️ | `data/` commit `8e0bba9`. **Gate B đạt**: từ đây không chạy lại `build-vault` |
 
 ## Phase 2: thí điểm improve
 
