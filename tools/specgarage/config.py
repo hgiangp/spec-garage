@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -19,6 +20,25 @@ class Spec:
     date: str
     source: Path
     images: Path | None
+    aliases: list[str] = field(default_factory=list)
+
+    def names(self) -> list[str]:
+        """Every name another spec may use for this one: code, title and aliases."""
+        return [self.code, self.title, *self.aliases]
+
+
+def normalize_name(name: str) -> str:
+    """Compare spec names loosely: case, spaces, dots and quotes do not matter ("NAVIG." == "navig")."""
+    return re.sub(r"[\s.\"'“”‘’_-]+", "", name).casefold()
+
+
+def lookup_spec(specs: list[Spec], name: str) -> Spec | None:
+    """The registered spec a name refers to (code, title or alias), or None if it is not registered."""
+    key = normalize_name(name)
+    for s in specs:
+        if any(normalize_name(n) == key for n in s.names() if n):
+            return s
+    return None
 
 
 def find_root(start: Path | None = None) -> Path:
@@ -40,5 +60,6 @@ def load_specs(root: Path) -> list[Spec]:
             date=str(s.get("date", "")),
             source=root / s["source"],
             images=root / s["images"] if s.get("images") else None,
+            aliases=[str(a) for a in s.get("aliases") or []],
         ))
     return specs

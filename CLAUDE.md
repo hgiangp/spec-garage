@@ -28,7 +28,8 @@ Cả hai repo đều nằm trên **GitLab nội bộ của công ty**. Không c�
 
 | Tiếng Việt (tạm thời) | Tiếng Anh (bắt buộc) |
 |---|---|
-| Tài liệu trong `docs/`, guide, `CLAUDE.md`, README, hướng dẫn trong `SKILL.md` | Code, comment, docstring, tên biến |
+| Tài liệu trong `docs/`, guide, `CLAUDE.md`, README | Code, comment, docstring, tên biến |
+| | Skill: `SKILL.md`, `references/` và mọi file đi kèm (skill cũ còn tiếng Việt sẽ chuyển dần) |
 | Trao đổi với người dùng | CLI help, log, message, thông báo lỗi |
 | | Commit message |
 | | Nội dung spec và mọi thứ ghi vào vault (requirement, bảng, `ASSUMPTION`, `question`, mô tả ảnh) |
@@ -97,6 +98,8 @@ uv run --project tools sg export [CODE…] --check                    # T5: vaul
 uv run --project tools sg validate [CODE…] [--fix-refs]             # T4: kiểm V01–V10, exit 1 nếu có error
 uv run --project tools sg get WRN-0342 [--no-frontmatter|--json]    # T3: nội dung section + file:dòng + breadcrumb
 uv run --project tools sg related WRN-0342 [--depth N|--json]       # T3: section link tới / được link từ
+uv run --project tools sg find "<term>" [--spec NAME] [--kind heading|table|text] [--json]  # thuật ngữ nằm ở section nào (tham chiếu chéo spec chỉ là chữ)
+uv run --project tools sg specs --lookup "LIN COMM"                 # tên (code/title/alias) → spec; exit 1 nếu chưa đăng ký
 uv run --project tools --group dev pytest tools/tests               # test tools
 ```
 

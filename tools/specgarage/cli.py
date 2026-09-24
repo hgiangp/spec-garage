@@ -9,8 +9,9 @@ from pathlib import Path
 
 from . import profile
 from .build_vault import DEFAULT_MAX_TOKENS, BuildError, build_vault
-from .config import DATA_DIR, find_root, load_specs
+from .config import DATA_DIR, find_root, load_specs, lookup_spec
 from .export import ExportError, export_vault
+from .find import find as find_term, to_dicts as find_to_dicts
 from .ids import IdError, allocate_ids
 from .init_data import init_data
 from .section import get as get_section, related as related_sections
@@ -39,10 +40,18 @@ def cmd_profile(args: argparse.Namespace) -> int:
 def cmd_specs(args: argparse.Namespace) -> int:
     root = find_root()
     specs = load_specs(root)
+    if args.lookup is not None:
+        s = lookup_spec(specs, args.lookup)
+        if s is None:
+            print(f"{args.lookup!r} is not in specs.yaml (code, title or aliases)", file=sys.stderr)
+            return 1
+        print(f"{s.code}  {s.title}  {s.source.relative_to(root).as_posix()}")
+        return 0
     for s in specs:
         src = "ok" if s.source.is_file() else "MISSING"
         img = "-" if s.images is None else ("ok" if s.images.is_dir() else "MISSING")
-        print(f"{s.code:<5} {s.doc_no:<15} {s.date:<10} source:{src:<7} images:{img:<7} {s.title}")
+        aka = f"  (aka {', '.join(s.aliases)})" if s.aliases else ""
+        print(f"{s.code:<5} {s.doc_no:<15} {s.date:<10} source:{src:<7} images:{img:<7} {s.title}{aka}")
     return 0
 
 
@@ -151,6 +160,26 @@ def cmd_related(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_find(args: argparse.Namespace) -> int:
+    try:
+        hits = find_term(find_root(), args.term, args.spec, args.kind, args.case_sensitive,
+                         not args.substring, args.include_preamble)
+    except VaultError as e:
+        print(e, file=sys.stderr)
+        return 1
+    if args.json:
+        print(json.dumps(find_to_dicts(hits), ensure_ascii=False, indent=2))
+        return 0 if hits else 1
+    for h in hits[:None if args.all else args.limit]:
+        inside = f" (in {h.note})" if h.note != h.id else ""
+        print(f"{h.id}{inside}  {h.kind:<7}  {h.path}:{h.line}  {' > '.join(h.breadcrumb)}")
+        print(f"    {h.snippet}")
+    if not args.all and len(hits) > args.limit:
+        print(f"… {len(hits) - args.limit} more (use --all)")
+    print(f"{len(hits)} hit(s) in {len({h.id for h in hits})} section(s)")
+    return 0 if hits else 1
+
+
 def cmd_new_id(args: argparse.Namespace) -> int:
     try:
         ids = allocate_ids(find_root(), args.code, args.n)
@@ -226,12 +255,30 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--json", action="store_true", help="output JSON")
     p.set_defaults(func=cmd_related)
 
+    p = sub.add_parser("find", help="sections where a term (signal, data name, parameter) appears, "
+                                    "as heading, table or text; exit 1 if none")
+    p.add_argument("term", help='text to look for, e.g. "FOO operation" (whole word, any case)')
+    p.add_argument("--spec", action="append",
+                   help="spec to search, by code, title or alias (e.g. LIN, 'LIN COMM'); repeatable. Default: all")
+    p.add_argument("--kind", action="append", choices=["heading", "table", "text"],
+                   help="only hits of this kind; repeatable")
+    p.add_argument("--case-sensitive", action="store_true", help="match case exactly")
+    p.add_argument("--substring", action="store_true",
+                   help="match inside words too (by default 'FOO operation' does not match 'XFOO operation')")
+    p.add_argument("--include-preamble", action="store_true", help="search the preamble (table of contents) too")
+    p.add_argument("--limit", type=int, default=30, help="hits shown (default 30)")
+    p.add_argument("--all", action="store_true", help="show every hit")
+    p.add_argument("--json", action="store_true", help="output JSON")
+    p.set_defaults(func=cmd_find)
+
     p = sub.add_parser("new-id", help="allocate new section IDs from next_id in data/vault/<CODE>/_manifest.yaml")
     p.add_argument("code", help="spec code, e.g. WRN")
     p.add_argument("-n", type=int, default=1, help="number of IDs to allocate")
     p.set_defaults(func=cmd_new_id)
 
     p = sub.add_parser("specs", help="list specs.yaml and check that source files exist")
+    p.add_argument("--lookup", metavar="NAME",
+                   help="which spec a name refers to (code, title or alias, e.g. 'LIN COMM'); exit 1 if not registered")
     p.set_defaults(func=cmd_specs)
 
     for name, desc in PLANNED.items():
@@ -242,7 +289,15 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def use_utf8_output() -> None:
+    """Spec text is full of non-ASCII (→, ‑, “”); a Windows cp1252 console would crash on print."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure") and (stream.encoding or "").lower().replace("-", "") != "utf8":
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    use_utf8_output()
     args = build_parser().parse_args(argv)
     return args.func(args)
 

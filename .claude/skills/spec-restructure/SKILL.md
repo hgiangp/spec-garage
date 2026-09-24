@@ -17,6 +17,7 @@ Sắp xếp lại cách trình bày. **Nội dung kỹ thuật giữ nguyên.**
 
 1. **Nạp tri thức:** đọc `knowledge/style-guide.md`, `data/knowledge/lessons.md`, `data/knowledge/glossary.md`.
 2. **Lấy dữ liệu:** `sg get <ID>`, `sg related <ID>` và report analyze (`data/reports/analyze/<ID>.md`).
+   Also the reference map `data/reports/trace/<ID>.md` from the `spec-trace` skill, so inputs keep their traced source and nature.
 3. **Chọn template** trong `knowledge/templates/` theo loại section: function, state machine, signal table, timing, DTC.
 4. **Liệt kê mọi "fact" trong bản gốc** trước khi viết lại: requirement, giá trị, điều kiện, link. Đây là checklist để bảo toàn nội dung.
 5. **Viết lại theo template:**

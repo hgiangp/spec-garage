@@ -21,6 +21,7 @@ Một trong:
    - Chưa có vault: đọc khoảng dòng của section kèm heading cha để biết ngữ cảnh.
 3. **Lấy section liên quan:**
    - Có vault: `sg related <ID>`.
+   - Signals, inputs and cross-spec references: read `data/reports/trace/<ID>.md`; if it does not exist, run the `spec-trace` skill first.
    - Chưa có vault: theo các link `#_Ref…` / `#_Toc…` trong section, tìm anchor tương ứng bằng grep.
    - Đọc các section đó ở mức đủ để kiểm tra nhất quán, không phân tích sâu.
 4. **Kiểm tra** từng requirement theo Q1–Q8 và toàn section theo S1–S7 trong checklist.

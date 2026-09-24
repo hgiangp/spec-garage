@@ -5,12 +5,16 @@
 #   source:  the Word→md output, copied under data/sources/<CODE>/ with its original name
 #   images:  optional; the image folder that came with the conversion. Image links are resolved
 #            relative to the source .md, so this is only used by `sg specs` as a sanity check.
+#   aliases: optional; other names other specs use for this one, e.g. in the "Source Function"
+#            column of a Reference data table or in `refer to SPEC"…"`. `sg specs --lookup` and
+#            `sg find --spec` match code, title and aliases, ignoring case, spaces, dots and quotes.
 
 specs:
   - code: WRN
     doc_no: 7820ZXXXXG000
     lang: E
     title: Warning
+    aliases: []
     date: 2026-02-20
     source: data/sources/WRN/7820ZXXXXG000_E_(Warning)_260220.md
     images: null  # TODO: data/sources/WRN/<image folder>
@@ -19,6 +23,7 @@ specs:
     doc_no: 7820ZXXXXS000
     lang: E
     title: EnlargeWA
+    aliases: []
     date: 2026-02-20
     source: data/sources/EWA/7820ZXXXXS000_E_(EnlargeWA)_260220.md
     images: null  # TODO
@@ -27,6 +32,7 @@ specs:
     doc_no: 7821ZXXXXF000
     lang: E
     title: LIN COMM
+    aliases: []
     date: 2025-06-20
     source: data/sources/LIN/7821ZXXXXF000_E_(LIN COMM)_250620.md
     images: null  # TODO
