@@ -134,8 +134,9 @@ def test_links_are_left_verbatim(tmp_path):
     _, body = read_note(vault, "DMD-0001")
     assert "[Table 1‑1](#_Ref100010)" in body  # not rewritten to a note link
     assert "(#overview)" in body
-    assert "<span id=\"_Ref100010\" class=\"anchor\">"</span> in body  # anchors kept too
-
+    # assert '<span id="_Ref100010" class="anchor"></span>' in body  # anchors kept too
+    assert "<span id=\"_Ref100010\" class=\"anchor\"></span>" in body  # anchors kept too
+ 
 
 def test_images_are_copied_and_repointed(tmp_path):
     vault = build(tmp_path, max_tokens=20)

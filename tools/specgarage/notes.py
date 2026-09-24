@@ -1,132 +1,147 @@
-"""CLI `sg`. Every mechanical operation on specs and the vault goes through here so skills stay consistent."""
+"""Where a spec is split into notes (D1).
+
+``sg profile`` simulates the split and ``sg build-vault`` performs it. Both call
+:func:`plan_notes`, so what the profile reports and what the build writes can never drift
+apart -- if they could, the Phase 0 numbers would say nothing about the real vault.
+
+A note is a contiguous range of lines. The notes of a document **tile** it: every line
+belongs to exactly one note, which is what lets ``sg export`` be a concatenation.
+"""
 
 from __future__ import annotations
 
-import argparse
-import sys
-from pathlib import Path
+from dataclasses import dataclass
 
-from . import profile
-from .build_vault import DEFAULT_MAX_TOKENS, BuildError, build_vault
-from .config import DATA_DIR, find_root, load_specs
-from .ids import IdError, allocate_ids
-from .init_data import init_data
-from .notes import SplitError
+from .parse import TABLE_CLOSE_RE, TABLE_OPEN_RE, Document
 
-PLANNED = {
-    "relink": "Phase 1: rewrite in-vault links to markdown links pointing at note IDs, in place (run after build-vault)",
-    "get": "Phase 1: print a section by ID with its breadcrumb",
-    "related": "Phase 1: sections an ID links to / is linked from",
-    "validate": "Phase 1: broken links, duplicate IDs, manifest drift, table column mismatches",
-    "export": "Phase 1: data/vault/ → build/export/<CODE>.md following _manifest.yaml",
-}
+CHARS_PER_TOKEN = 4
 
 
-def cmd_profile(args: argparse.Namespace) -> int:
-    paths = args.paths or [find_root() / DATA_DIR / "sources"]
-    thresholds = [int(t) for t in args.thresholds.split(",")]
-    text = profile.run(paths, thresholds, args.json, args.diagnose)
-    if args.out:
-        args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(text + "\n", encoding="utf-8")
-        print(f"Wrote {args.out}")
-    else:
-        print(text)
-    return 0
+def tokens(chars: int) -> int:
+    """Approximate token count. Good enough to size notes, not to fill a context window."""
+    return round(chars / CHARS_PER_TOKEN)
 
 
-def cmd_specs(args: argparse.Namespace) -> int:
-    root = find_root()
-    specs = load_specs(root)
-    for s in specs:
-        src = "ok" if s.source.is_file() else "MISSING"
-        img = "-" if s.images is None else ("ok" if s.images.is_dir() else "MISSING")
-        print(f"{s.code:<5} {s.doc_no:<15} {s.date:<10} source:{src:<7} images:{img:<7} {s.title}")
-    return 0
+class SplitError(ValueError):
+    pass
 
 
-def cmd_init_data(args: argparse.Namespace) -> int:
-    for line in init_data(find_root(), migrate=args.migrate_legacy, git=not args.no_git):
-        print(line)
-    return 0
+@dataclass
+class Note:
+    heading: int | None  # index into doc.headings; None = the preamble note (<CODE>-0000)
+    start: int  # 1-based, inclusive: the heading line itself
+    end: int  # 1-based, exclusive
+    chars: int
 
 
-def cmd_build_vault(args: argparse.Namespace) -> int:
-    try:
-        for line in build_vault(find_root(), args.codes, args.max_tokens, args.force,
-                                args.dry_run, args.i_know_baseline_exists):
-            print(line)
-    except (BuildError, SplitError) as e:
-        print(e, file=sys.stderr)
-        return 1
-    return 0
+def plan_notes(doc: Document, max_tokens: int) -> list[Note]:
+    """Split a document into notes: descend the heading tree until a subtree fits.
+
+    A heading whose subtree is too big becomes a note holding only the text down to its
+    first child; the children then become notes of their own. Text before the first
+    heading is one note.
+    """
+    if not doc.headings:
+        return [Note(None, 1, doc.line_count + 1, doc.total_chars)]
+
+    starts = _note_starts(doc, max_tokens)
+    starts = _keep_html_tables_whole(doc, starts)
+    starts = _pull_leading_anchor_lines(doc, starts)
+    offsets = _line_offsets(doc)
+
+    notes = []
+    for n, (heading, start) in enumerate(starts):
+        end = starts[n + 1][1] if n + 1 < len(starts) else doc.line_count + 1
+        notes.append(Note(heading, start, end, offsets[end - 1] - offsets[start - 1]))
+    return notes
 
 
-def cmd_new_id(args: argparse.Namespace) -> int:
-    try:
-        ids = allocate_ids(find_root(), args.code, args.n)
-    except IdError as e:
-        print(e, file=sys.stderr)
-        return 1
-    print("\n".join(ids))
-    return 0
+def _note_starts(doc: Document, max_tokens: int) -> list[tuple[int | None, int]]:
+    starts: list[tuple[int | None, int]] = []
+    if doc.preamble_chars:
+        starts.append((None, 1))
+
+    def visit(idx: int) -> None:
+        h = doc.headings[idx]
+        starts.append((idx, h.line))
+        if tokens(h.subtree_chars) > max_tokens and h.children:
+            for c in h.children:
+                visit(c)
+
+    for r in doc.roots:
+        visit(r.index)
+    return starts
 
 
-def cmd_planned(args: argparse.Namespace) -> int:
-    print(f"`sg {args.command}` is not implemented yet. {PLANNED[args.command]}", file=sys.stderr)
-    return 2
+def _keep_html_tables_whole(doc: Document, starts: list[tuple[int | None, int]]) -> list[tuple[int | None, int]]:
+    """Move any note boundary that would fall inside an HTML table past the end of it.
+
+    The converter leaves large tables as raw HTML (WRN: 219 of them). Cutting one in half
+    would destroy it in both the vault and the export.
+    """
+    spans = _html_table_spans(doc.text.splitlines())
+    moved = []
+    for heading, line in starts:
+        for open_line, close_line in spans:
+            if open_line < line <= close_line:
+                moved.append((heading, close_line + 1, line))
+                break
+        else:
+            moved.append((heading, line, line))
+
+    for (_, prev_line, _), (heading, line, original) in zip(moved, moved[1:]):
+        if line <= prev_line:
+            raise SplitError(
+                f"{doc.path.name}: the heading at line {original} sits inside an HTML table, "
+                f"so a note cannot start there. Fix the source or raise --max-tokens."
+            )
+    return [(heading, line) for heading, line, _ in moved]
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="sg", description="Spec Garage tools")
-    sub = parser.add_subparsers(dest="command", required=True)
+def _pull_leading_anchor_lines(doc: Document, starts: list[tuple[int | None, int]]) -> list[tuple[int | None, int]]:
+    """Move an anchor-only line sitting just above a heading into that heading's note.
 
-    p = sub.add_parser("profile", help="Phase 0: structure statistics (headings, sizes, anchors, links, tables, images)")
-    p.add_argument("paths", nargs="*", type=Path, help=".md files or directories (default: data/sources/)")
-    p.add_argument("--thresholds", default="2000,3000,5000,8000", help="token thresholds for the note split simulation (D1)")
-    p.add_argument("--json", action="store_true", help="output JSON instead of text")
-    p.add_argument("--diagnose", action="store_true",
-                   help="explain unresolved anchors with redacted markup skeletons (no spec text)")
-    p.add_argument("--out", type=Path, help="write to a file, e.g. data/reports/profile.txt")
-    p.set_defaults(func=cmd_profile)
+    Word bookmarks on a heading are emitted on their own line above it, so the anchor and the
+    heading it names would otherwise land in different notes.
+    """
+    lines = doc.text.splitlines()
+    owner = {d.line: d.heading for d in doc.anchor_defs if d.placement == "before_heading"}
 
-    p = sub.add_parser("init-data", help="create the local data workspace data/ (its own git repo)")
-    p.add_argument("--migrate-legacy", action="store_true",
-                   help="move data from the legacy locations (sources/, vault/, reports/, evals/) into data/")
-    p.add_argument("--no-git", action="store_true", help="do not run git init in data/")
-    p.set_defaults(func=cmd_init_data)
-
-    p = sub.add_parser("build-vault", help="Phase 1: data/sources/ → data/vault/ (split into notes, assign IDs, "
-                                           "frontmatter, copy images; links are kept verbatim)")
-    p.add_argument("codes", nargs="*", help="spec codes to build (default: all in specs.yaml)")
-    p.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS,
-                   help=f"split threshold per note (D1, default {DEFAULT_MAX_TOKENS})")
-    p.add_argument("--force", action="store_true", help="rebuild a vault directory that already exists")
-    p.add_argument("--dry-run", action="store_true", help="report what would be written, write nothing")
-    p.add_argument("--i-know-baseline-exists", action="store_true",
-                   help="build even though the baseline-original tag exists (this discards the baseline)")
-    p.set_defaults(func=cmd_build_vault)
-
-    p = sub.add_parser("new-id", help="allocate new section IDs from next_id in data/vault/<CODE>/_manifest.yaml")
-    p.add_argument("code", help="spec code, e.g. WRN")
-    p.add_argument("-n", type=int, default=1, help="number of IDs to allocate")
-    p.set_defaults(func=cmd_new_id)
-
-    p = sub.add_parser("specs", help="list specs.yaml and check that source files exist")
-    p.set_defaults(func=cmd_specs)
-
-    for name, desc in PLANNED.items():
-        p = sub.add_parser(name, help=f"(not implemented) {desc}")
-        p.add_argument("rest", nargs=argparse.REMAINDER)
-        p.set_defaults(func=cmd_planned)
-
-    return parser
+    out: list[tuple[int | None, int]] = []
+    for heading, line in starts:
+        floor = out[-1][1] + 1 if out else 1
+        pos, pulled = line - 1, line
+        while heading is not None and pos >= floor:
+            if owner.get(pos) == heading:
+                pulled = pos
+            elif lines[pos - 1].strip():
+                break
+            pos -= 1
+        out.append((heading, pulled))
+    return out
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
-    return args.func(args)
+def _html_table_spans(lines: list[str]) -> list[tuple[int, int]]:
+    """(first line, last line) of every top-level ``<table>`` block, nesting included."""
+    spans: list[tuple[int, int]] = []
+    depth, open_line = 0, 0
+    for i, line in enumerate(lines, start=1):
+        opens = len(TABLE_OPEN_RE.findall(line))
+        closes = len(TABLE_CLOSE_RE.findall(line))
+        if opens and depth == 0:
+            open_line = i
+        depth = max(0, depth + opens - closes)
+        if closes and depth == 0 and open_line:
+            spans.append((open_line, i))
+            open_line = 0
+    if open_line:  # never closed: treat the rest of the file as part of it
+        spans.append((open_line, len(lines)))
+    return spans
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+def _line_offsets(doc: Document) -> list[int]:
+    """offsets[k] = number of characters in the first k lines (newline counted)."""
+    offsets = [0]
+    for line in doc.text.splitlines():
+        offsets.append(offsets[-1] + len(line) + 1)
+    return offsets

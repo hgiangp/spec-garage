@@ -15,7 +15,7 @@ with no number.
 The demo function shall turn the demo lamp on. See
 [Table 1‑1](#_Ref100010) and [Overview](#overview) and [Appendix](#appendix).
 
-Table 1‑1 Demo parameters
+<span id="_Ref100010" class="anchor"></span>Table 1‑1 Demo parameters
 
 <table>
 <tbody>
@@ -40,7 +40,7 @@ release.](images/image1.png){width="5.0in" height="2.5in"}
 Text for the first overview, long enough to be worth its own note when the threshold is
 small. Padding padding padding padding padding padding padding padding padding padding.
 
-id="_Ref100020" class="anchor"></span>
+<span id="_Ref100020" class="anchor"></span>
 
 ### 1.1.1. Sub Behaviour
 
@@ -48,7 +48,7 @@ The demo lamp shall stay on for 200 ms.
 
 # 2. Second Function
 
-id="_Ref100030" class="anchor"></span>
+<span id="_Ref100030" class="anchor"></span>
 
 ## 2.1. Overview
 
