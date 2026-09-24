@@ -93,10 +93,11 @@ uv run --project tools sg profile --out data/reports/profile.txt    # Phase 0
 uv run --project tools sg profile --diagnose                         # giải thích anchor chưa resolve (không lộ chữ)
 uv run --project tools sg new-id WRN [-n 3]                         # cấp ID mới
 uv run --project tools sg build-vault [CODE…] [--dry-run|--force]   # T2: sources → vault (445 note)
+uv run --project tools sg export [CODE…] --check                    # T5: vault → build/export/, so round-trip với source
 uv run --project tools --group dev pytest tools/tests               # test tools
 ```
 
-Các lệnh `get`, `related`, `validate`, `export`, `relink` đã có chỗ trong CLI nhưng chưa implement (Phase 1). 
+Các lệnh `get`, `related`, `validate`, `relink` đã có chỗ trong CLI nhưng chưa implement (Phase 1). 
 **Ngưỡng tách note (D1, đã chốt): 3000 token** cho cả ba spec → 445 note, p90 ≈ 2.2k token.
 
 ## Definition of done (mọi commit/PR tính năng)

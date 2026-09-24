@@ -266,7 +266,9 @@ Bước riêng, **sửa tại chỗ** trong vault, chỉ động vào link:
 - Chạy được nhiều lần, kết quả không đổi (idempotent): link đã ở dạng `<ID>.md` thì bỏ qua.
 - **Sau `baseline-original`:** mỗi lần relink phải áp lên **cả baseline** và gắn tag mới (`baseline-relinked-1`), nếu không phép so sánh before/after sẽ lệch.
 
-### T5: `export.py` (`sg export <CODE> [--keep-ids]`)
+### T5: `export.py` (`sg export [CODE…] [--keep-ids] [--check]`) ✅
+
+> Xong (branch `phase1/t5-export`). Guide: [`guides/export.md`](guides/export.md). `--check` là công cụ round-trip cho Gate B: so từng dòng không rỗng với source, thoát mã 1 nếu lệch. Export vault đã relink chưa được hỗ trợ (chờ T2b).
 
 - Nối các note theo thứ tự `tree`, bỏ frontmatter.
 - **Bỏ các dòng `<!-- id: … -->`** mà build chèn dưới heading con (với `--keep-ids` thì giữ).

@@ -9,6 +9,7 @@ from pathlib import Path
 from . import profile
 from .build_vault import DEFAULT_MAX_TOKENS, BuildError, build_vault
 from .config import DATA_DIR, find_root, load_specs
+from .export import ExportError, export_vault
 from .ids import IdError, allocate_ids
 from .init_data import init_data
 from .notes import SplitError
@@ -18,7 +19,6 @@ PLANNED = {
     "get": "Phase 1: print a section by ID with its breadcrumb",
     "related": "Phase 1: sections an ID links to / is linked from",
     "validate": "Phase 1: broken links, duplicate IDs, manifest drift, table column mismatches",
-    "export": "Phase 1: data/vault/ → build/export/<CODE>.md following _manifest.yaml",
 }
 
 
@@ -60,6 +60,27 @@ def cmd_build_vault(args: argparse.Namespace) -> int:
         print(e, file=sys.stderr)
         return 1
     return 0
+
+
+def cmd_export(args: argparse.Namespace) -> int:
+    failed = False
+    try:
+        for r in export_vault(find_root(), args.codes, args.keep_ids, args.check, args.out_dir):
+            print(f"{r.code}: {r.notes} notes, {r.lines:,} lines -> {r.path}")
+            for w in dict.fromkeys(r.warnings):
+                print(f"  WARNING {r.code}: {w}")
+            if args.check:
+                if r.mismatch:
+                    failed = True
+                    print(f"  round-trip FAILED {r.code}:")
+                    for m in r.mismatch:
+                        print(f"    {m}")
+                else:
+                    print(f"  round-trip OK {r.code}: identical to the source, ignoring blank lines")
+    except ExportError as e:
+        print(e, file=sys.stderr)
+        return 1
+    return 1 if failed else 0
 
 
 def cmd_new_id(args: argparse.Namespace) -> int:
@@ -106,6 +127,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--i-know-baseline-exists", action="store_true",
                    help="build even though the baseline-original tag exists (this discards the baseline)")
     p.set_defaults(func=cmd_build_vault)
+
+    p = sub.add_parser("export", help="Phase 1: data/vault/ → build/export/<CODE>.md, following _manifest.yaml")
+    p.add_argument("codes", nargs="*", help="spec codes to export (default: every spec that has a vault)")
+    p.add_argument("--keep-ids", action="store_true", help="keep the <!-- id: --> lines under sub-headings")
+    p.add_argument("--check", action="store_true",
+                   help="compare the export with the source (round trip, ignoring blank lines); exit 1 on a difference")
+    p.add_argument("--out-dir", type=Path, help="directory to write to (default: build/export/)")
+    p.set_defaults(func=cmd_export)
 
     p = sub.add_parser("new-id", help="allocate new section IDs from next_id in data/vault/<CODE>/_manifest.yaml")
     p.add_argument("code", help="spec code, e.g. WRN")

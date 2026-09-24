@@ -22,7 +22,8 @@
 | Phase 0 trọn vẹn: dựng `data/`, profile 3 spec, P0.5 anchor resolution | ✅ |
 | Q1–Q5 (anchor, ngưỡng tách, cú pháp link, phạm vi T2) | ✅ đã chốt, xem §4 |
 | T2 `build-vault` (T2-lite) | ✅ branch `phase1/t2-vault-decisions`, [guide](guides/build-vault.md). 445 note, nối lại ra đúng bản gốc |
-| T5 `export`, T4 `validate`, T3 `get`/`related` | ⏳ **việc tiếp theo: T5** |
+| T5 `export` + `--check` | ✅ branch `phase1/t5-export`, [guide](guides/export.md) |
+| T4 `validate`, T3 `get`/`related` | ⏳ **việc tiếp theo: T4** |
 | T2b `relink` | ⏳ sau Gate B |
 
 `data/`: branch `main`, đã push lên GitLab. Chưa có tag `baseline-original`.
@@ -81,8 +82,9 @@ Hệ quả:
 
 1. ✅ Dọn dẹp, chốt quyết định vào docs.
 2. ✅ **T2 `build-vault`** (T2-lite).
-3. **T5 `export` + round-trip** → T4 `validate` → T3 `get`/`related`. Song song: **Gate A** (`spec-analyze` trên `data/sources/`).
-4. Gate B → tag `baseline-original`.
-5. Gate C → Phase 2 (S1–S6 trong `tasks.md`).
-6. T2b `relink` → Gate D → tag `baseline-relinked-1`.
+3. ✅ **T5 `export` + round-trip** (`sg export --check`).
+4. **T4 `validate`** → T3 `get`/`related`. Song song: **Gate A** (`spec-analyze` trên `data/sources/`). Trên máy có dữ liệu: chạy `sg build-vault` rồi `sg export --check` cho 3 spec (V1).
+5. Gate B → tag `baseline-original`.
+6. Gate C → Phase 2 (S1–S6 trong `tasks.md`).
+7. T2b `relink` → Gate D → tag `baseline-relinked-1`.
  
