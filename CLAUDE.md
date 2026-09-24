@@ -95,10 +95,12 @@ uv run --project tools sg new-id WRN [-n 3]                         # cấp ID m
 uv run --project tools sg build-vault [CODE…] [--dry-run|--force]   # T2: sources → vault (445 note)
 uv run --project tools sg export [CODE…] --check                    # T5: vault → build/export/, so round-trip với source
 uv run --project tools sg validate [CODE…] [--fix-refs]             # T4: kiểm V01–V10, exit 1 nếu có error
+uv run --project tools sg get WRN-0342 [--no-frontmatter|--json]    # T3: nội dung section + file:dòng + breadcrumb
+uv run --project tools sg related WRN-0342 [--depth N|--json]       # T3: section link tới / được link từ
 uv run --project tools --group dev pytest tools/tests               # test tools
 ```
 
-Các lệnh `get`, `related`, `relink` đã có chỗ trong CLI nhưng chưa implement (Phase 1). 
+Lệnh `relink` (T2b) đã có chỗ trong CLI nhưng chưa implement, làm sau Gate B. 
 **Ngưỡng tách note (D1, đã chốt): 3000 token** cho cả ba spec → 445 note, p90 ≈ 2.2k token.
 
 ## Definition of done (mọi commit/PR tính năng)

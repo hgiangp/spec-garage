@@ -306,7 +306,9 @@ Bước riêng, **sửa tại chỗ** trong vault, chỉ động vào link:
 
 Có `--fix-refs` để cập nhật lại `refs_out`. Đây là thứ duy nhất validate được phép sửa.
 
-### T3: `section.py`
+### T3: `section.py` ✅
+
+> Xong (branch `phase1/t3-get-related`). Guide: [`guides/get-related.md`](guides/get-related.md). `related` mặc định bỏ link từ mục lục (preamble), thêm `--include-preamble` để tính; bỏ cả link nội bộ của chính section đang hỏi.
 
 - `sg get <ID> [--no-frontmatter]`:
   - In ra breadcrumb (`heading_path`) rồi đến nội dung.

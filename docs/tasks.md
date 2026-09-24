@@ -66,7 +66,7 @@ Commit chỉ có code, không kèm các mục trên, thì chưa được coi là
 | T2  | `sg build-vault` (T2-lite: tách note, ID, frontmatter, ảnh, `_anchors.yaml`) | ✅           | 🗄️      | `phase1/t2-vault-decisions`             | [build-vault](guides/build-vault.md)                                                           | 445 note trên spec thật; nối lại ra đúng bản gốc                      |
 | T5  | `sg export` + `--check` round-trip | ✅ | 💻 | `phase1/t5-export` | [export](guides/export.md) | Round-trip chính xác (trừ dòng trống) trên fixture ở 4 ngưỡng. **Trên 3 spec thật: round-trip OK cả ba** (2026-09-24) |
 | T4  | `sg validate` (V01–V10) | ✅ | 💻 | `phase1/t4-validate` | [validate](guides/validate.md) | Vault vừa build ra 0 finding trên fixture. **Chạy trên 3 spec thật ở V1** |
-| T3  | `sg get`, `sg related`                                                         | ⏳           | 🗄️      |                                           |                                                                                               | Cần cho 4 skill draft                                                        |
+| T3  | `sg get`, `sg related` | ✅ | 💻 | `phase1/t3-get-related` | [get-related](guides/get-related.md) | Kèm `vault.py` (chỉ mục section, dùng chung với validate). Skill draft giờ đã có đủ lệnh `sg` |
 | T7  | Mở rộng fixture và test                                                         | 🔄           | 🗄️      |                                           |                                                                                               | Làm dần theo từng ticket                                                   |
 | T2b | `sg relink`: viết lại link sang `[text](<ID>.md)`, tại chỗ                 | ⏳           | 🗄️      |                                           | [next-steps §3 T2b](next-steps.md#t2b-relinkpy-sg-relink-code---dry-run---report--sau-gate-b) | **Sau Gate B.** Phải áp lên cả baseline, gắn tag mới              |
 | T8  | ~~Tạo PR `phase0/p05-anchor-resolution` → `main`~~                          | ✅           | 💻        |                                           |                                                                                               | Không còn cần:`main` đã chứa toàn bộ commit đó                    |
@@ -102,7 +102,7 @@ Nối note lại theo manifest ra **đúng** văn bản gốc trên cả ba spec
 
 | #  | Task                                                                            | Trạng thái | Máy          | Ghi chú                                                                              |
 | -- | ------------------------------------------------------------------------------- | ------------ | ------------- | ------------------------------------------------------------------------------------- |
-| V1 | `sg build-vault && sg export --check && sg validate` trên 3 spec | 🔄 | 🗄️ | Build + `export --check`: **OK cả ba spec** (2026-09-24). Còn `sg validate` |
+| V1 | `sg build-vault && sg export --check && sg validate` trên 3 spec | ✅ | 🗄️ | Round-trip OK và validate xong trên cả ba spec (2026-09-24) |
 | V2 | Expert kiểm tra khoảng 10 note mỗi spec (VS Code, GitLab web hoặc Obsidian) | ⏳           | 🗄️ + expert | Checklist: next-steps §4. Chưa kiểm link bấm được — link chỉ resolve sau T2b |
 | V3 | Tag`baseline-original` trong repo `data/`                                   | ⏳           | 🗄️          | **Bắt buộc có trước Phase 2**                                              |
 

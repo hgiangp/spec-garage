@@ -17,12 +17,13 @@ import yaml
 from .config import DATA_DIR, load_specs
 from .export import ExportError, split_note
 from .ids import IdError, format_id, load_manifest, manifest_path, parse_id
-from .parse import PIPE_SEP_RE, Document, parse_text
+from .parse import PIPE_SEP_RE, parse_text
+from .vault import ID_COMMENT_RE, NoteFile
+from .vault import read_note as _read_note
 
 REQUIRED_FIELDS = ("id", "spec", "title", "aliases", "legacy_number", "heading_path", "level",
                    "anchors", "refs_out", "status", "derived_from")
 STATUSES = ("original", "proposed", "reviewed", "approved")
-ID_COMMENT_RE = re.compile(r"^<!-- id: (\S+)(?: \| [^\n]*)? -->$")
 NOTE_LINK_RE = re.compile(r"^(?:\.\./([A-Z]{2,5})/)?([A-Z]{2,5}-\d{4,5})\.md$")
 BROKEN_REF = "#broken-ref"
 
@@ -76,38 +77,13 @@ class Report:
                 "findings": [asdict(f) | {"level": f.level} for f in self.findings]}
 
 
-@dataclass
-class NoteFile:
-    id: str
-    path: Path
-    rel: str
-    front: dict | None
-    body: str
-    offset: int  # lines before the body (frontmatter block)
-    doc: Document | None = None
-
-
 # ── reading ────────────────────────────────────────────────────────────────────────────────
 
 
 def read_note(path: Path, rel: str, out: list[Finding]) -> NoteFile:
-    text = path.read_text(encoding="utf-8")
-    try:
-        body = split_note(text, path)
-    except ExportError as e:
-        out.append(Finding("V01", rel, 1, str(e).split(": ", 1)[-1]))
-        return NoteFile(path.stem, path, rel, None, text, 0)
-    front_text = text[4:len(text) - len(body) - 5]
-    offset = text[:len(text) - len(body)].count("\n")
-    try:
-        front = yaml.safe_load(front_text)
-    except yaml.YAMLError as e:
-        out.append(Finding("V01", rel, 1, f"frontmatter is not valid YAML: {e}"))
-        front = None
-    if front is not None and not isinstance(front, dict):
-        out.append(Finding("V01", rel, 1, "frontmatter is not a mapping"))
-        front = None
-    return NoteFile(path.stem, path, rel, front, body, offset)
+    note, problems = _read_note(path, rel)
+    out.extend(Finding("V01", rel, 1, p) for p in problems)
+    return note
 
 
 def pipe_rows(line: str) -> int:

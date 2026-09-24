@@ -13,13 +13,13 @@ from .config import DATA_DIR, find_root, load_specs
 from .export import ExportError, export_vault
 from .ids import IdError, allocate_ids
 from .init_data import init_data
+from .section import get as get_section, related as related_sections
+from .vault import VaultError
 from .validate import RULES, ValidateError, validate
 from .notes import SplitError
 
 PLANNED = {
     "relink": "Phase 1: rewrite in-vault links to markdown links pointing at note IDs, in place (run after build-vault)",
-    "get": "Phase 1: print a section by ID with its breadcrumb",
-    "related": "Phase 1: sections an ID links to / is linked from",
 }
 
 
@@ -113,6 +113,44 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return 1 if report.errors else 0
 
 
+def cmd_get(args: argparse.Namespace) -> int:
+    try:
+        s = get_section(find_root(), args.id, frontmatter=not args.no_frontmatter)
+    except VaultError as e:
+        print(e, file=sys.stderr)
+        return 1
+    if args.json:
+        print(json.dumps(s, ensure_ascii=False, indent=2))
+        return 0
+    first, last = s["lines"]
+    where = s["id"] if s["id"] == s["note"] else f"{s['id']} (in {s['note']})"
+    print(f"{where}  {s['path']}:{first}-{last}  ~{s['tokens']:,} tokens")
+    print(" > ".join(s["breadcrumb"]) or s["title"])
+    print()
+    print(s["text"])
+    return 0
+
+
+def cmd_related(args: argparse.Namespace) -> int:
+    try:
+        r = related_sections(find_root(), args.id, args.depth, args.include_preamble)
+    except VaultError as e:
+        print(e, file=sys.stderr)
+        return 1
+    if args.json:
+        print(json.dumps(r, ensure_ascii=False, indent=2))
+        return 0
+    print(f"{r['id']}  {r['title']}  ~{r['tokens']:,} tokens")
+    for direction, label in (("out", "links to"), ("in", "linked from")):
+        items = r[direction]
+        print(f"{label} ({len(items)}):")
+        for i in items:
+            inside = f" (in {i['note']})" if i["note"] != i["id"] else ""
+            hop = f"  depth {i['depth']}" if args.depth > 1 else ""
+            print(f"  {i['id']}{inside}  {i['title']}  ~{i['tokens']:,} tokens  via {', '.join(i['via'])}{hop}")
+    return 0
+
+
 def cmd_new_id(args: argparse.Namespace) -> int:
     try:
         ids = allocate_ids(find_root(), args.code, args.n)
@@ -173,6 +211,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, default=10, help="findings shown per rule (default 10)")
     p.add_argument("--all", action="store_true", help="show every finding")
     p.set_defaults(func=cmd_validate)
+
+    p = sub.add_parser("get", help="print a section (note or sub-heading) by ID, with its file, lines and breadcrumb")
+    p.add_argument("id", help="section ID, e.g. WRN-0342")
+    p.add_argument("--no-frontmatter", action="store_true", help="for a note, print the body only")
+    p.add_argument("--json", action="store_true", help="output JSON (id, note, path, lines, breadcrumb, tokens, text)")
+    p.set_defaults(func=cmd_get)
+
+    p = sub.add_parser("related", help="sections a section links to and is linked from (no text, just IDs)")
+    p.add_argument("id", help="section ID, e.g. WRN-0342")
+    p.add_argument("--depth", type=int, default=1, help="follow links this many hops (default 1)")
+    p.add_argument("--include-preamble", action="store_true",
+                   help="count links from the preamble (table of contents), which points at every heading")
+    p.add_argument("--json", action="store_true", help="output JSON")
+    p.set_defaults(func=cmd_related)
 
     p = sub.add_parser("new-id", help="allocate new section IDs from next_id in data/vault/<CODE>/_manifest.yaml")
     p.add_argument("code", help="spec code, e.g. WRN")
