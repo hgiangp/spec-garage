@@ -115,7 +115,7 @@ Nối note lại theo manifest ra **đúng** văn bản gốc trên cả ba spec
 | S3 | `spec-restructure`, `spec-parameterize` trên 1–2 section     | ⏳           | 🗄️          | Cần T3                                                                                         |
 | S4 | Vòng review →`lessons.md`, `glossary.md`                     | ⏳           | 🗄️ + expert |                                                                                                 |
 | S5 | Eval case 10–20 section                                           | ⏳           | 🗄️          |                                                                                                 |
-| S6a | Skill `spec-trace` + `sg find`, `sg specs --lookup`, `aliases` trong registry | ✅ bản đầu | 🗄️ | Branch `phase2/s6-spec-trace`. Eval vòng 1: 3 lượt chạy xong (có skill 17/17 assertion; baseline 9/10 trên case 1); 3 lượt dừng vì hết hạn mức API, cần chạy lại. Xem [spec-trace](guides/spec-trace.md) |
+| S6a | Skill `spec-trace` + `sg find`, `sg specs --lookup`, `aliases` trong registry | ✅ bản đầu | 🗄️ | Branch `phase2/s6-spec-trace`. Eval vòng 1: 3 lượt chạy xong (có skill 17/17 assertion; baseline 9/10 trên case 1); 3 lượt dừng vì hết hạn mức API, cần chạy lại. Xem [spec-trace](guides/spec-trace.md). Bổ sung (branch `phase2/s6-find-near-miss`): `sg find` 0 hit thì gợi ý tên dài hơn ra stderr (`R_SCROLL` → `R_SCROLL_UP`…), JSON thêm `matches` |
 | S6 | Hoàn thiện 4 skill draft                                         | ⏳           | 💻            | Chỉ cải tiến quy trình, không đưa nội dung domain                                       |
 
 ## Câu hỏi mở

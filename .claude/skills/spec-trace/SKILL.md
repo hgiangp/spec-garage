@@ -60,6 +60,7 @@ For every definition you find, write its **nature** in one sentence or less, in 
 
 ### 4. When nothing is found
 
+- Read stderr first. With no whole-word hit, `sg find` names the longer names that contain the term (`no whole-word match; --substring finds it inside: R_FOO_UP (3), …`). Those are **other names**, usually other signals, not the term itself: they are variants, not a resolution.
 - Try **controlled name variants**: drop/add the suffix " operation" or " SW", `_` ↔ space, `L_`/`R_` prefixes, hyphens. Use `--substring` if needed.
 - A match found only through a variant has status `resolved-fuzzy` and names the matched text. It is not a conclusion; put it in the questions for the expert.
 - If nothing matches, the status is `not-found`; list the searches you tried.

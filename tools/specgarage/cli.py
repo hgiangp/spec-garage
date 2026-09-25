@@ -11,7 +11,7 @@ from . import profile
 from .build_vault import DEFAULT_MAX_TOKENS, BuildError, build_vault
 from .config import DATA_DIR, find_root, load_specs, lookup_spec
 from .export import ExportError, export_vault
-from .find import find as find_term, to_dicts as find_to_dicts
+from .find import find as find_term, near_misses as find_near_misses, to_dicts as find_to_dicts
 from .ids import IdError, allocate_ids
 from .init_data import init_data
 from .section import get as get_section, related as related_sections
@@ -22,6 +22,7 @@ from .notes import SplitError
 PLANNED = {
     "relink": "Phase 1: rewrite in-vault links to markdown links pointing at note IDs, in place (run after build-vault)",
 }
+NEAR_MISSES = 5  # longer names listed when a whole-word `find` has no hits
 
 
 def cmd_profile(args: argparse.Namespace) -> int:
@@ -167,6 +168,13 @@ def cmd_find(args: argparse.Namespace) -> int:
     except VaultError as e:
         print(e, file=sys.stderr)
         return 1
+    if not hits and not args.substring:
+        near = find_near_misses(find_root(), args.term, args.spec, args.kind, args.case_sensitive,
+                                args.include_preamble)
+        if near:
+            names = ", ".join(f"{name} ({n})" for name, n in near.most_common(NEAR_MISSES))
+            more = f", … {len(near) - NEAR_MISSES} more" if len(near) > NEAR_MISSES else ""
+            print(f"no whole-word match; --substring finds it inside: {names}{more}", file=sys.stderr)
     if args.json:
         print(json.dumps(find_to_dicts(hits), ensure_ascii=False, indent=2))
         return 0 if hits else 1
@@ -264,7 +272,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="only hits of this kind; repeatable")
     p.add_argument("--case-sensitive", action="store_true", help="match case exactly")
     p.add_argument("--substring", action="store_true",
-                   help="match inside words too (by default 'FOO operation' does not match 'XFOO operation')")
+                   help="match inside words too (by default 'FOO operation' does not match 'XFOO operation', "
+                        "nor 'R_FOO' 'R_FOO_UP'; with no whole-word hit, stderr lists such longer names)")
     p.add_argument("--include-preamble", action="store_true", help="search the preamble (table of contents) too")
     p.add_argument("--limit", type=int, default=30, help="hits shown (default 30)")
     p.add_argument("--all", action="store_true", help="show every hit")

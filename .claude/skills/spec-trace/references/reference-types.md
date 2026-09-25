@@ -18,7 +18,7 @@ Details for step 2 and step 3 of `SKILL.md`. All names below are synthetic.
 |---|---|
 | `sg get <ID>` | The text of a section or sub-heading, its file:lines and breadcrumb |
 | `sg related <ID>` | Sections the section links to / is linked from, through anchors |
-| `sg find "<term>" [--spec NAME] [--kind heading\|table\|text]` | Every hit as *smallest section ID + kind + file:line + snippet*. Whole-word and case-insensitive by default, so `FOO_REQ` does not match `X_FOO_REQ`; `--substring` and `--case-sensitive` change that. Headings sort first. The preamble (table of contents) is skipped unless `--include-preamble`. Exit 1 when there are no hits |
+| `sg find "<term>" [--spec NAME] [--kind heading\|table\|text]` | Every hit as *smallest section ID + kind + file:line + snippet*. Whole-word and case-insensitive by default, so `FOO_REQ` does not match `X_FOO_REQ` and `R_FOO` does not match `R_FOO_UP` (`_` is part of a name); `--substring` and `--case-sensitive` change that. Headings sort first. The preamble (table of contents) is skipped unless `--include-preamble`. Exit 1 when there are no hits; then stderr lists the longer names that contain the term, if any. `--json` hits also carry `matches`, the text matched on the line |
 | `sg specs --lookup "<name>"` | The registered spec for a code, title or alias (case, spaces, dots and quotes ignored). Exit 1 if not registered |
 
 Prefer `sg find` over raw grep: it returns section IDs you can pass to `sg get`, and skips ID comments and the table of contents.
@@ -69,7 +69,8 @@ Checks worth recording as observations:
 
 - Recognize: `refer to 3.2`, `(refer to 3.2)`, `see chapter 5`, `Table 1-3`, `Figure 2-1` without a link.
 - Resolve a section number: `sg find "3.2." --spec <CODE> --kind heading` (whole-word matching keeps `3.2.1.` out). Compare the heading title with any title quoted in the text.
-- Resolve a table/figure number: `sg find "Table 1-3" --spec <CODE> --kind text` finds the caption line; the section holding it is the target. A plain hyphen in the search also matches the non-breaking hyphen Word uses (`1‑3`).- Several matching headings, or a title mismatch → `ambiguous`.
+- Resolve a table/figure number: `sg find "Table 1-3" --spec <CODE> --kind text` finds the caption line; the section holding it is the target. A plain hyphen in the search also matches the non-breaking hyphen Word uses (`1‑3`).
+- Several matching headings, or a title mismatch → `ambiguous`.
 
 ## bare-name
 

@@ -6,7 +6,7 @@ import pytest
 
 from specgarage.cli import main
 from specgarage.config import load_specs, lookup_spec, normalize_name
-from specgarage.find import find, term_pattern
+from specgarage.find import find, near_misses, term_pattern
 from specgarage.vault import VaultError
 from test_section import built
 
@@ -85,6 +85,31 @@ def test_word_and_case_options(tmp_path):
     assert find(root, "DEMO LAMP", case_sensitive=True) == []
 
 
+def with_signals(tmp_path):
+    """The fixture vault plus a line naming two signals that share the prefix R_DEMO."""
+    root = built(tmp_path)
+    note = root / "data" / "vault" / "DMD" / "DMD-0006.md"
+    note.write_text(note.read_text(encoding="utf-8")
+                    + "\nR_DEMO_UP or R_DEMO_DOWN changes from 0; see also r_demo_up.\n", encoding="utf-8")
+    return root
+
+
+def test_underscore_is_part_of_a_name(tmp_path):
+    root = with_signals(tmp_path)
+    assert find(root, "R_DEMO") == []  # R_DEMO_UP is another signal, not a use of R_DEMO
+    hits = find(root, "R_DEMO_UP")
+    assert where(hits) == [("DMD-0006", "text")] and hits[0].matches == ["R_DEMO_UP", "r_demo_up"]
+
+
+def test_near_misses_list_the_longer_names(tmp_path):
+    root = with_signals(tmp_path)
+    assert near_misses(root, "R_DEMO") == {"R_DEMO_UP": 1, "R_DEMO_DOWN": 1, "r_demo_up": 1}
+    assert near_misses(root, "R_DEMO", case_sensitive=True) == {"R_DEMO_UP": 1, "R_DEMO_DOWN": 1}
+    assert near_misses(root, "R_DEMO", kinds=["heading"]) == {}  # --kind applies too
+    assert near_misses(root, "no such term") == {}
+    assert near_misses(root, "verview")["Overview"] >= 2  # works for inner parts of words as well
+
+
 def test_spec_filter_by_name_and_unknown_spec(tmp_path):
     root = built(tmp_path)
     assert find(root, "200 ms", specs=["Demo Vault"])
@@ -126,3 +151,23 @@ def test_cli(tmp_path, monkeypatch, capsys):
     assert main(["specs", "--lookup", "demo vault"]) == 0
     assert capsys.readouterr().out.startswith("DMD  Demo Vault  data/sources/DMD/")
     assert main(["specs", "--lookup", "Unknown Module"]) == 1
+
+
+def test_cli_hints_at_longer_names_when_nothing_matches(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(with_signals(tmp_path))
+    assert main(["find", "R_DEMO"]) == 1  # still no hit: the hint does not change the result
+    out, err = capsys.readouterr()
+    assert "0 hit(s)" in out
+    assert err.strip() == ("no whole-word match; --substring finds it inside: "
+                           "R_DEMO_UP (1), R_DEMO_DOWN (1), r_demo_up (1)")
+
+    assert main(["find", "R_DEMO", "--json"]) == 1
+    out, err = capsys.readouterr()
+    assert json.loads(out) == [] and "R_DEMO_UP" in err  # stdout stays valid JSON
+
+    assert main(["find", "R_DEMO", "--substring", "--json"]) == 0
+    out, err = capsys.readouterr()
+    assert json.loads(out)[0]["matches"] == ["R_DEMO", "R_DEMO", "r_demo"] and err == ""
+
+    assert main(["find", "no such term"]) == 1
+    assert capsys.readouterr().err == ""  # no hint when there is nothing to hint at

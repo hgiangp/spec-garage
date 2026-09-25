@@ -9,6 +9,7 @@ defining place.
 from __future__ import annotations
 
 import re
+from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -30,6 +31,7 @@ class Hit:
     kind: str
     breadcrumb: list[str]
     snippet: str
+    matches: list[str]  # the matched text on the line, as written there
 
 
 HYPHENS = "-‐‑‒–"  # Word output uses non-breaking hyphens in "Table 1‑3"
@@ -81,7 +83,7 @@ def find_in_vault(vault: SpecVault, pattern: re.Pattern, include_preamble: bool 
                 in_table = False
             s = vault.section_at(note.id, n)
             hits.append(Hit(s.id, note.id, vault.code, note.rel, n + note.offset, kind,
-                            vault.breadcrumb(s), _clean(line)))
+                            vault.breadcrumb(s), _clean(line), pattern.findall(line)))
     return hits
 
 
@@ -103,7 +105,29 @@ def find(root: Path, term: str, specs: list[str] | None = None, kinds: list[str]
          case_sensitive: bool = False, word: bool = True, include_preamble: bool = False) -> list[Hit]:
     if not term.strip():
         raise VaultError("empty search term")
-    pattern = term_pattern(term, case_sensitive, word)
+    return _search(root, term_pattern(term, case_sensitive, word), specs, kinds, include_preamble)
+
+
+def near_misses(root: Path, term: str, specs: list[str] | None = None, kinds: list[str] | None = None,
+                case_sensitive: bool = False, include_preamble: bool = False) -> Counter[str]:
+    """Longer names holding the term, with their hit counts, for a whole-word search that found nothing.
+
+    "_" is a word character, so "R_FOO" does not match "R_FOO_UP" (a different signal). Without this,
+    "0 hits" reads the same whether the term is absent or only part of longer names.
+    """
+    if not term.strip():
+        raise VaultError("empty search term")
+    inner = term_pattern(term, case_sensitive, word=False)
+    before = r"[\w.]*" if term.strip()[:1].isdigit() else r"\w*"  # same guards as term_pattern
+    pattern = re.compile(rf"{before}(?:{inner.pattern})\w*", inner.flags)
+    counts: Counter[str] = Counter()
+    for h in _search(root, pattern, specs, kinds, include_preamble):
+        counts.update(h.matches)
+    return counts
+
+
+def _search(root: Path, pattern: re.Pattern, specs: list[str] | None, kinds: list[str] | None,
+            include_preamble: bool) -> list[Hit]:
     hits: list[Hit] = []
     for code in resolve_codes(root, specs):
         hits.extend(find_in_vault(load_spec_vault(root, code), pattern, include_preamble))

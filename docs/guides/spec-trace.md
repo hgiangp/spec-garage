@@ -30,6 +30,12 @@ Mỗi dòng trong map có **bản chất** của thuật ngữ (theo lời spec 
 
 - **`sg find "<term>"`**: tìm thuật ngữ trong vault, trả về **section nhỏ nhất** chứa nó, loại hit (`heading` / `table` / `text`), `file:dòng`, breadcrumb và trích đoạn.
   - Mặc định khớp **nguyên từ** và không phân biệt hoa thường, nên `FOO operation` không khớp `XFOO operation`.
+  - `_` là một phần của tên, nên `R_FOO` **không** khớp `R_FOO_UP`: đó là hai signal khác nhau. Khi tìm nguyên từ mà không có hit nào, lệnh ghi ra stderr các tên dài hơn có chứa thuật ngữ, để phân biệt "không có" với "chỉ có trong tên dài hơn":
+    ```
+    no whole-word match; --substring finds it inside: R_FOO_UP (3), R_FOO_DOWN (3), R_FOO_PUSH (1)
+    0 hit(s) in 0 section(s)
+    ```
+    Exit code vẫn là 1 và stdout của `--json` vẫn là JSON hợp lệ (`[]`). Liệt kê tối đa 5 tên, số trong ngoặc là số lần xuất hiện.
   - Gạch nối thường khớp cả non-breaking hyphen của Word (`Table 1‑3`).
   - Số mục `3.2.` không khớp `1.3.2.`.
   - Mặc định bỏ qua preamble (mục lục).
@@ -74,7 +80,7 @@ DMD-0003 (in DMD-0001)  text     data/vault/DMD/DMD-0001.md:55  1. Demo Function
 | `--case-sensitive` | Phân biệt hoa thường |
 | `--include-preamble` | Tìm cả trong mục lục |
 | `--limit N` / `--all` | Số hit in ra (mặc định 30) |
-| `--json` | `[{id, note, spec, path, line, kind, breadcrumb, snippet}]` |
+| `--json` | `[{id, note, spec, path, line, kind, breadcrumb, snippet, matches}]`. `matches` là đoạn chữ khớp trên dòng, giữ nguyên cách viết (hữu ích với `--substring`) |
 
 Hit được sắp theo thứ tự `heading` → `table` → `text`, vì chỗ định nghĩa thường là heading.
 
@@ -83,6 +89,7 @@ Hit được sắp theo thứ tự `heading` → `table` → `text`, vì chỗ �
 **Cho agent:**
 - Chỉ đọc. Không sửa vault và `specs.yaml`. Nếu cần thêm alias hoặc spec mới, ghi vào câu hỏi cho expert.
 - Không suy nghĩa theo tên. Một dòng chỉ được ghi `resolved` khi đã thực sự `sg get` section đích.
+- `sg find` trả 0 hit thì đọc stderr trước khi ghi `not-found`. Tên dài hơn được gợi ý (ví dụ `R_FOO_UP` khi tìm `R_FOO`) là **tên khác**, chỉ là biến thể: tối đa là `resolved-fuzzy`, kèm câu hỏi cho expert.
 - Một spec có thể chứa **nhiều khối chức năng**, mỗi khối có mục Input riêng. Phải dùng đúng bảng Reference data của khối chứa section đang lần.
 - Không đưa nội dung spec ra dịch vụ ngoài.
 
@@ -112,6 +119,7 @@ Các trường hợp được test:
 - khớp nguyên từ, khớp tên bị xuống dòng, số mục, non-breaking hyphen;
 - hit map về section nhỏ nhất, đúng loại, đúng số dòng trong file;
 - sắp heading trước, bỏ preamble, không khớp dòng `<!-- id -->`;
+- `_` là một phần của tên (`R_DEMO` không khớp `R_DEMO_UP`), gợi ý tên dài hơn khi 0 hit (tôn trọng `--kind`, `--case-sensitive`), gợi ý ra stderr, không đổi exit code và JSON;
 - lọc theo spec, báo lỗi với spec chưa đăng ký, CLI và `--json`.
 
 **Eval skill** (repo dữ liệu, theo quy trình skill-creator):
