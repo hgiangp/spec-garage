@@ -10,7 +10,7 @@
 
 ## Tính năng làm gì
 
-**`sg specs`** đọc `specs.yaml` và kiểm tra file nguồn của từng spec có tồn tại không.
+**`sg specs`** đọc `data/specs.yaml` và kiểm tra file nguồn của từng spec có tồn tại không.
 
 **`sg profile`** (Phase 0) đo cấu trúc spec để ra các quyết định trước khi build vault:
 - tách note ở ngưỡng nào (D1);
@@ -109,7 +109,7 @@ Output mẫu (fixture giả lập DMC):
 | `setext?` cao | Converter dùng heading kiểu gạch chân | Cần bổ sung parser |
 | `missing files` > 0 | Ảnh không nằm đúng chỗ so với file md | Đặt lại folder ảnh cạnh file md như lúc convert |
 | `other doc numbers mentioned in text` | Spec nhắc số tài liệu khác trong nội dung | Đây là tham chiếu cross-spec dạng chữ, dùng cho `spec-consistency` |
-| `cross-file … unknown_file` | Link tới spec ngoài bộ `specs.yaml` | Quyết định thêm vào registry hay coi là tham chiếu ngoài |
+| `cross-file … unknown_file` | Link tới spec ngoài bộ `data/specs.yaml` | Quyết định thêm vào registry hay coi là tham chiếu ngoài |
 | `over:` | Note vẫn lớn hơn ngưỡng, liệt kê theo **số heading** | Thường là section lá có bảng lớn. Expert xem có cần tách theo nội dung không |
 
 Link sang file khác được khớp theo **tên file (stem)**, rồi theo **số tài liệu** (phần trước `_` đầu tiên).

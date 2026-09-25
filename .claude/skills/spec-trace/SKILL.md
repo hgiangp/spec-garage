@@ -73,7 +73,7 @@ Write `data/reports/trace/<ID>.md` in **English**, using exactly the template in
 ## When to ask the expert
 
 Add a question under "Questions for the expert" when:
-- a source spec is not in `specs.yaml` (`unregistered-spec`), even if the name looks close to a registered one — ask whether an alias should be added;
+- a source spec is not in `data/specs.yaml` (`unregistered-spec`), even if the name looks close to a registered one — ask whether an alias should be added;
 - the term is not found in the target spec, or only through a name variant;
 - there are several definitions, or the definition contradicts how the section uses the term;
 - the target spec defines the term but does not list it in its Output table, or the other way round;
@@ -81,7 +81,7 @@ Add a question under "Questions for the expert" when:
 
 ## Rules
 
-- **Read-only.** Do not edit the vault or `specs.yaml`. Suggest aliases or new specs as questions.
+- **Read-only.** Do not edit the vault or `data/specs.yaml`. Suggest aliases or new specs as questions.
 - **No guessing.** Every `resolved` row must name a target section ID that you actually read with `sg get`.
 - **Observe, do not judge.** State what you see (e.g. two groups of terms with the same tag but a different nature) and leave the fix to the expert.
 - **Short quotes** (≤ 15 words) to locate things.

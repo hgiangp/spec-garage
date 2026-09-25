@@ -25,7 +25,7 @@ def test_normalize_name_ignores_case_spaces_dots_quotes():
 
 def test_lookup_by_code_title_and_alias(tmp_path):
     root = built(tmp_path)
-    reg = root / "specs.yaml"
+    reg = root / "data" / "specs.yaml"
     reg.write_text(reg.read_text(encoding="utf-8") + "    aliases: [Demo COMM]\n", encoding="utf-8")
     specs = load_specs(root)
     assert specs[0].aliases == ["Demo COMM"]

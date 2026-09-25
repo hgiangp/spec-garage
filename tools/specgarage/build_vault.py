@@ -222,13 +222,28 @@ def copy_images(doc: Document, dest: Path, dry_run: bool) -> tuple[int, list[str
 # ── safety ──────────────────────────────────────────────────────────────────────────────────
 
 
-def baseline_exists(data: Path) -> bool:
-    try:
-        done = subprocess.run(["git", "-C", str(data), "tag", "--list", BASELINE_TAG],
-                              capture_output=True, text=True, timeout=10)
-    except (OSError, subprocess.SubprocessError):
-        return False  # no git here: the caller is not running against a tagged baseline
-    return BASELINE_TAG in done.stdout.split()
+def baseline_tag(code: str) -> str:
+    """The tag holding the "before" vault of a spec added after the first baseline."""
+    return f"{BASELINE_TAG}-{code}"
+
+
+def baseline_of(data: Path, code: str) -> str | None:
+    """The baseline tag that holds this spec's vault, or None if the spec is not baselined yet.
+
+    Specs in the first baseline are under the shared tag; each spec added later gets its own. A
+    spec is baselined only if the tag really contains its vault, so a new spec can be built while
+    the others stay frozen.
+    """
+    for tag in (baseline_tag(code), BASELINE_TAG):
+        try:
+            done = subprocess.run(["git", "-C", str(data), "cat-file", "-e",
+                                   f"{tag}:vault/{code}/_manifest.yaml"],
+                                  capture_output=True, timeout=10)
+        except (OSError, subprocess.SubprocessError):
+            return None  # no git here: the caller is not running against a tagged baseline
+        if done.returncode == 0:
+            return tag
+    return None
 
 
 def sha256(path: Path) -> str:
@@ -321,11 +336,13 @@ def build_vault(root: Path, codes: list[str] | None = None, max_tokens: int = DE
     if not specs:
         raise BuildError(f"no spec matches {codes}. Run `sg specs` to see the registry.")
 
-    if baseline_exists(data) and not allow_baseline:
+    frozen = {s.code: tag for s in specs if (tag := baseline_of(data, s.code))}
+    if frozen and not allow_baseline:
+        which = ", ".join(f"{code} ({tag})" for code, tag in frozen.items())
         raise BuildError(
-            f"{BASELINE_TAG} already exists in {data}: the baseline must never be rebuilt "
-            f"(improvements to linking are `sg relink`, in place). Use --i-know-baseline-exists "
-            f"only if you are deliberately discarding the baseline."
+            f"already baselined: {which}. A baseline must never be rebuilt (improvements to "
+            f"linking are `sg relink`, in place). Build only the specs that are not baselined, "
+            f"or use --i-know-baseline-exists if you are deliberately discarding that baseline."
         )
 
     for spec in specs:
@@ -350,3 +367,10 @@ def build_vault(root: Path, codes: list[str] | None = None, max_tokens: int = DE
                f"{built.anchors} anchors, {built.images} images, largest note ~{built.largest:,} tokens")
 
     yield ("dry run: nothing written" if dry_run else f"vault written to {vault}")
+    if not dry_run:
+        fresh = [s.code for s in specs if s.code not in frozen]
+        if fresh:
+            args = " ".join(fresh)
+            yield (f"next: sg export {args} --check, sg validate {args}, commit in {DATA_DIR}/, then "
+                   + ", ".join(f"git -C {DATA_DIR} tag -a {baseline_tag(c)} -m \"Before state of the {c} vault\""
+                               for c in fresh))

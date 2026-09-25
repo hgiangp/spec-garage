@@ -31,6 +31,7 @@ Một git repo thứ hai phủ lên các thư mục rải rác ở gốc vẫn p
 ```
 data/                      git repo riêng, remote = GitLab nội bộ
 ├─ README.md  .gitignore
+├─ specs.yaml              registry: mã spec ↔ file nguồn, đường dẫn tương đối với data/ (T9)
 ├─ sources/<CODE>/         spec gốc Word→md + folder ảnh (chỉ đọc)
 ├─ vault/                  thư mục markdown (Obsidian chỉ là trình xem tuỳ chọn)
 │  ├─ .obsidian/app.json   link markdown, không tự sửa link khi đổi tên
@@ -76,7 +77,7 @@ cd ..
 | Tuỳ chọn | Tác dụng |
 |---|---|
 | (không có) | Tạo các file và thư mục còn thiếu, `git init` nếu chưa có. **Không ghi đè** file đã tồn tại, nên chạy lại bao nhiêu lần cũng an toàn |
-| `--migrate-legacy` | Chuyển từng file ở vị trí cũ (`sources/`, `vault/`, `reports/`, `evals/`) vào `data/` cùng đường dẫn. File đích đã tồn tại thì bỏ qua và báo. Thư mục cũ bị xoá khi đã rỗng |
+| `--migrate-legacy` | Chuyển từng file ở vị trí cũ (`sources/`, `vault/`, `reports/`, `evals/`) vào `data/` cùng đường dẫn. File đích đã tồn tại thì bỏ qua và báo. Thư mục cũ bị xoá khi đã rỗng. `specs.yaml` ở gốc được chuyển thành `data/specs.yaml`, bỏ tiền tố `data/` trong đường dẫn ([guide](add-spec.md)) |
 | `--no-git` | Không chạy `git init` |
 
 Nếu còn dữ liệu ở vị trí cũ mà không có `--migrate-legacy`, lệnh sẽ in `WARNING: data found in legacy locations…` và không di chuyển gì.
@@ -88,8 +89,10 @@ cd data
 git switch -c improve/WRN-0342-parameters   # mỗi lần improve một branch
 git diff main...                            # expert review
 git switch main && git merge --no-ff improve/WRN-0342-parameters
-git tag baseline-original                   # một lần, sau build-vault đầu tiên được duyệt (V3)
+git tag -a baseline-original-<CODE> -m "…"  # một lần cho mỗi spec, sau build-vault đầu tiên được duyệt
 ```
+
+Các spec có từ đầu (Gate B) dùng chung tag `baseline-original`. Mỗi spec thêm sau có tag riêng `baseline-original-<CODE>` ([guide](add-spec.md)). `sg specs` cho biết spec nào nằm trong tag nào.
 
 ## Quy tắc
 
@@ -114,5 +117,6 @@ Các trường hợp được test:
 - không ghi đè file đã có;
 - cảnh báo khi còn dữ liệu ở vị trí cũ;
 - migrate vào thư mục đích đã tồn tại sẵn;
+- workspace mới có `specs.yaml` rỗng; `specs.yaml` ở gốc được migrate, và không bị che bởi registry rỗng khi chưa migrate;
 - `git init`.
  

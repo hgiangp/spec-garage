@@ -18,23 +18,26 @@ Tách mỗi file spec trong `data/sources/` thành nhiều note trong `data/vaul
 
 **Không** viết lại link, **không** đổi cú pháp anchor. Link `[Table 1‑1](#_Ref100010)` trong vault vẫn y như trong source. Việc đổi link sang dạng trỏ tới note là `sg relink` (T2b), chạy sau, khi vault đã được kiểm chứng. Tách như vậy vì viết lại link là thao tác rủi ro nhất (resolve sai đích thì mất thông tin một cách âm thầm), còn build là thứ sinh ra baseline.
 
-Hệ quả có thể kiểm chứng được: **nối các note lại theo `_manifest.yaml` thì ra đúng file gốc.** Đã kiểm trên cả ba spec thật (WRN 19,613 dòng không rỗng, EWA 6,275, LIN 5,383 — giống hệt).
+Hệ quả có thể kiểm chứng được: **nối các note lại theo `_manifest.yaml` thì ra đúng file gốc.** `sg export <CODE> --check` kiểm điều này cho từng spec.
 
 ## Cách dùng
 
+Spec mới thì thường không gọi trực tiếp lệnh này mà dùng `sg add-spec … --build` ([guide](add-spec.md)).
+
 ```bash
-uv run --project tools sg build-vault --dry-run    # xem trước, không ghi gì
-uv run --project tools sg build-vault              # build cả ba spec
-uv run --project tools sg build-vault WRN --force  # build lại một spec
+uv run --project tools sg build-vault DMD --dry-run  # xem trước, không ghi gì
+uv run --project tools sg build-vault DMD            # build một spec chưa có baseline
+uv run --project tools sg build-vault DMD --force    # build lại vault chưa có baseline
 ```
 
-Output:
+Không truyền mã nào thì build mọi spec trong `data/specs.yaml`, nên sẽ bị chặn ngay khi có một spec đã baseline.
+
+Output (fixture):
 
 ```
-WRN: 247 notes, 1593 headings, 4022 anchors, 269 images, largest note ~16,499 tokens
-EWA: 127 notes, 394 headings, 1122 anchors, 88 images, largest note ~5,660 tokens
-LIN: 71 notes, 219 headings, 517 anchors, 9 images, largest note ~7,688 tokens
+DMD: 4 notes, 6 headings, 14 anchors, 1 images, largest note ~223 tokens
 vault written to …/data/vault
+next: sg export DMD --check, sg validate DMD, commit in data/, then git -C data tag -a baseline-original-DMD -m "Before state of the DMD vault"
 ```
 
 | Tuỳ chọn | Tác dụng |
@@ -42,7 +45,7 @@ vault written to …/data/vault
 | `--max-tokens N` | Ngưỡng tách, mặc định **3000** (D1) |
 | `--dry-run` | Chỉ in thống kê, không ghi file |
 | `--force` | Build lại thư mục vault đã tồn tại (xoá rồi ghi lại) |
-| `--i-know-baseline-exists` | Build kể cả khi tag `baseline-original` đã tồn tại. **Gần như không bao giờ dùng** |
+| `--i-know-baseline-exists` | Build cả spec đã có vault trong một tag baseline, tức là **bỏ baseline của spec đó**. **Gần như không bao giờ dùng** |
 
 ## Sinh ra những gì
 
@@ -105,15 +108,15 @@ notes:              # heading ID → note chứa nó (chỉ ghi khi hai cái kh�
 
 **An toàn:**
 - Từ chối ghi đè vault đã tồn tại nếu không có `--force`.
-- Từ chối **tuyệt đối** nếu tag `baseline-original` đã tồn tại trong repo `data/`. Sau khi có baseline, không bao giờ build lại — cải thiện link là `sg relink` tại chỗ.
+- Từ chối build **spec đã có baseline**: spec có `vault/<CODE>/_manifest.yaml` trong tag `baseline-original-<CODE>` hoặc trong tag chung `baseline-original` (các spec có từ đầu). Spec chưa có trong tag nào thì build được, kể cả khi spec khác đã đóng băng. Sau khi có baseline, không bao giờ build lại spec đó — cải thiện link là `sg relink` tại chỗ.
 - `source_sha256` trong manifest cho biết vault được build từ đúng bản nguồn nào.
 
 ## Giới hạn đã biết
 
-- **Preamble là mục lục và rất to.** WRN ~16.5k token, EWA ~5.7k. Nó luôn vượt ngưỡng. Đây là chủ ý: giữ nguyên văn để round-trip, skill bỏ qua note `-0000`.
-- **Hai section nội dung vượt ngưỡng**: WRN heading `2` (~9.6k token) và LIN `3.1.6.2` (~7.7k). Không tách được nữa vì chúng không có heading con. Expert quyết ở Phase 2.
+- **Preamble là mục lục và thường rất to**, nên thường vượt ngưỡng. Đây là chủ ý: giữ nguyên văn để round-trip, skill bỏ qua note `-0000`.
+- **Section không có heading con mà vượt ngưỡng** (hoặc chứa một bảng lớn không được cắt) thì không tách được nữa. `largest note` trong output cho thấy chúng. Expert quyết ở Phase 2.
 - **Token là ước lượng** (ký tự / 4). Đủ để chọn ranh giới, không dùng để tính context.
-- **Heading nằm trong bảng HTML** sẽ làm build dừng với `SplitError`, vì không thể bắt đầu một note ở giữa bảng. Không xảy ra với ba spec hiện tại.
+- **Heading nằm trong bảng HTML** sẽ làm build dừng với `SplitError`, vì không thể bắt đầu một note ở giữa bảng.
 - **Ảnh trùng tên** ở hai thư mục khác nhau sẽ bị báo `WARNING` và chỉ copy file đầu tiên.
 - `refs_out` được sinh từ `_anchors.yaml`, **không** từ link đã viết lại (vì link chưa được viết lại).
 
@@ -124,5 +127,7 @@ uv run --project tools --group dev pytest tools/tests/test_build_vault.py
 ```
 
 Fixture `DMD` mô phỏng đúng những dạng converter thật xuất ra: mục lục lồng số trang, anchor caption trong `<span>`, bảng HTML có `<ol start>` ẩn, ảnh có alt text **xuống dòng** và `{width=…}`, hai heading trùng tiêu đề (pandoc thành slug `overview-1`), một heading không có số.
+
+`test_baseline_freezes_only_the_specs_it_holds` dựng một repo git thật trong thư mục tạm, gắn từng loại tag, rồi kiểm spec cũ bị chặn còn spec mới build được.
 
 Test quan trọng nhất: `test_note_text_is_the_source_text` — nối các note lại phải ra đúng văn bản gốc. Đây là thứ giữ cho build trung thực.

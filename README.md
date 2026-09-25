@@ -12,6 +12,7 @@ Ingest và improve spec automotive (Word → Markdown + ảnh) cùng AI agent.
   - [workspace `data/` và `sg init-data`](docs/guides/data-workspace.md)
   - [`sg profile`, `sg specs`, parser](docs/guides/profile.md)
   - [Section ID, manifest, `sg new-id`](docs/guides/ids-manifest.md)
+  - [thêm spec: `sg add-spec`, registry `data/specs.yaml`](docs/guides/add-spec.md)
   - [skill improve và tri thức](docs/guides/skills.md)
 
 ## Hai máy
@@ -24,18 +25,19 @@ Ingest và improve spec automotive (Word → Markdown + ảnh) cùng AI agent.
 Yêu cầu: [uv](https://docs.astral.sh/uv/), Python ≥ 3.11.
 
 ```bash
-uv run --project tools sg init-data     # tạo data/ + git init (thêm --migrate-legacy nếu đã chép spec vào sources/ cũ)
-# chép spec đã convert vào data/sources/<CODE>/ đúng tên trong specs.yaml, kèm folder ảnh
-uv run --project tools sg specs
+uv run --project tools sg init-data     # tạo data/ + git init (thêm --migrate-legacy nếu còn specs.yaml hoặc sources/ ở gốc)
+uv run --project tools sg add-spec "<thư mục .out của converter>" --code <CODE> --build   # thêm từng spec
+uv run --project tools sg specs         # trạng thái: source, ảnh, số note, tag baseline
 uv run --project tools sg profile --out data/reports/profile.txt
 ```
+
+Thêm spec chỉ thay đổi repo `data/`, không sửa gì trong repo này: [guide](docs/guides/add-spec.md).
 
 ## Cấu trúc
 
 ```
-specs.yaml          registry spec: mã ↔ file nguồn
 knowledge/          tri thức chung: style guide, checklist, templates
 .claude/skills/     skill improve: spec-analyze, -restructure, -parameterize, -consistency, -diagram
 tools/              CLI `sg` (+ data_template/ là khung cho data/)
-data/               CHỈ LOCAL: sources/, vault/ (mở trong Obsidian), knowledge/ (glossary, lessons), reports/, evals/
+data/               repo dữ liệu riêng: specs.yaml (registry), sources/, vault/, knowledge/ (glossary, lessons), reports/, evals/
 ```

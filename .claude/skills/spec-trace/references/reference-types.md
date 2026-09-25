@@ -95,6 +95,6 @@ Checks worth recording as observations:
 | `resolved-fuzzy` | Found only through a name variant; the row names the matched text |
 | `ambiguous` | Several candidate definitions, or number and title disagree |
 | `not-found` | Nothing matched in the spec(s) searched; searches listed |
-| `unregistered-spec` | The source/target spec is not in `specs.yaml` |
+| `unregistered-spec` | The source/target spec is not in `data/specs.yaml` |
 | `broken-link` | Anchor link that does not resolve |
 | `external` | Outside the spec set; not traced |

@@ -26,5 +26,5 @@ Chỉ **báo cáo**.
 
 ## Quy tắc
 - **Không kết luận bên nào đúng.** Nêu mâu thuẫn và hỏi expert.
-- Nếu phát hiện spec được refer nhưng không có trong `specs.yaml`, ghi vào mục "Out-of-scope specs".
+- Nếu phát hiện spec được refer nhưng không có trong `data/specs.yaml`, ghi vào mục "Out-of-scope specs".
 - **Ngôn ngữ output:** report và mọi nội dung ghi vào spec/vault viết bằng **tiếng Anh**.

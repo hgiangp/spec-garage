@@ -40,7 +40,7 @@ Mỗi dòng trong map có **bản chất** của thuật ngữ (theo lời spec 
   - Số mục `3.2.` không khớp `1.3.2.`.
   - Mặc định bỏ qua preamble (mục lục).
 - **`sg specs --lookup "<tên>"`**: tên (code, title hoặc alias) ứng với spec nào trong registry. Exit 1 nếu chưa đăng ký.
-- **`aliases:` trong `specs.yaml`**: các tên khác mà spec khác dùng để gọi spec này, ví dụ trong cột Source Function. Khi so sánh, hoa/thường, khoảng trắng, dấu chấm và dấu nháy đều được bỏ qua. Hiện cả ba spec đều để `aliases: []`, vì title đã khớp cách các spec gọi nhau (`LIN COMM`, `EnlargeWA`, `Warning`). Chỉ thêm alias khi expert xác nhận.
+- **`aliases:` trong `data/specs.yaml`**: các tên khác mà spec khác dùng để gọi spec này, ví dụ trong cột Source Function. Khi so sánh, hoa/thường, khoảng trắng, dấu chấm, `/` và dấu nháy đều được bỏ qua (`ADAS/AD` = `ADAS AD`), nên chỉ cần alias khi tên thật sự khác title. Chỉ thêm alias khi expert xác nhận.
 
 ## Cách dùng
 
@@ -61,7 +61,7 @@ uv run --project tools sg find "Reference data" --spec EWA --kind heading
 uv run --project tools sg find "3.2." --spec EWA --kind heading
 uv run --project tools sg find "FOO" --substring --json
 uv run --project tools sg specs --lookup "LIN COMM"      # LIN  LIN COMM  data/sources/LIN/…
-uv run --project tools sg specs --lookup "Unknown Module"  # exit 1: not in specs.yaml
+uv run --project tools sg specs --lookup "Unknown Module"  # exit 1: not in data/specs.yaml
 ```
 
 Output `find` (fixture giả lập):
@@ -87,7 +87,7 @@ Hit được sắp theo thứ tự `heading` → `table` → `text`, vì chỗ �
 ## Quy tắc
 
 **Cho agent:**
-- Chỉ đọc. Không sửa vault và `specs.yaml`. Nếu cần thêm alias hoặc spec mới, ghi vào câu hỏi cho expert.
+- Chỉ đọc. Không sửa vault và `data/specs.yaml`. Nếu cần thêm alias hoặc spec mới, ghi vào câu hỏi cho expert.
 - Không suy nghĩa theo tên. Một dòng chỉ được ghi `resolved` khi đã thực sự `sg get` section đích.
 - `sg find` trả 0 hit thì đọc stderr trước khi ghi `not-found`. Tên dài hơn được gợi ý (ví dụ `R_FOO_UP` khi tìm `R_FOO`) là **tên khác**, chỉ là biến thể: tối đa là `resolved-fuzzy`, kèm câu hỏi cho expert.
 - Một spec có thể chứa **nhiều khối chức năng**, mỗi khối có mục Input riêng. Phải dùng đúng bảng Reference data của khối chứa section đang lần.
@@ -95,8 +95,8 @@ Hit được sắp theo thứ tự `heading` → `table` → `text`, vì chỗ �
 
 **Cho expert và người dùng:**
 - Đọc mục "Missing specs" và "Questions for the expert" trong report. Khi trả lời:
-  - thêm alias vào `specs.yaml` (repo code), hoặc
-  - thêm spec mới vào registry, hoặc
+  - thêm alias vào `data/specs.yaml` (repo `data/`), hoặc
+  - thêm spec mới bằng `sg add-spec` ([guide](add-spec.md)), hoặc
   - ghi rule mới vào `data/knowledge/lessons.md` (ví dụ quy ước đặt tên giữa hai spec).
 - Skill **không bao giờ tự thêm alias**.
 

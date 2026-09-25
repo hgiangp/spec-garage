@@ -1,6 +1,6 @@
 """Section IDs and the per-spec manifest (D2, D3).
 
-An ID is ``<CODE>-<NNNN>``: CODE from specs.yaml, NNNN a per-spec counter whose width (4 or 5 digits)
+An ID is ``<CODE>-<NNNN>``: CODE from data/specs.yaml, NNNN a per-spec counter whose width (4 or 5 digits)
 is fixed for the whole spec. IDs carry no meaning, are never renumbered and never reused.
 
 ``data/vault/<CODE>/_manifest.yaml`` holds the note tree (document order), ``next_id`` and the
@@ -20,6 +20,7 @@ import yaml
 from .config import DATA_DIR
 
 MANIFEST = "_manifest.yaml"
+CODE_RE = re.compile(r"^[A-Z]{2,5}$")
 ID_RE = re.compile(r"^([A-Z]{2,5})-(\d{4,5})$")
 
 

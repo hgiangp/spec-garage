@@ -8,7 +8,8 @@ import sys
 from pathlib import Path
 
 from . import profile
-from .build_vault import DEFAULT_MAX_TOKENS, BuildError, build_vault
+from .add_spec import AddSpecError, add_spec
+from .build_vault import DEFAULT_MAX_TOKENS, BuildError, baseline_of, build_vault
 from .config import DATA_DIR, find_root, load_specs, lookup_spec
 from .export import ExportError, export_vault
 from .find import find as find_term, near_misses as find_near_misses, to_dicts as find_to_dicts
@@ -44,21 +45,51 @@ def cmd_specs(args: argparse.Namespace) -> int:
     if args.lookup is not None:
         s = lookup_spec(specs, args.lookup)
         if s is None:
-            print(f"{args.lookup!r} is not in specs.yaml (code, title or aliases)", file=sys.stderr)
+            print(f"{args.lookup!r} is not in {DATA_DIR}/specs.yaml (code, title or aliases)", file=sys.stderr)
             return 1
         print(f"{s.code}  {s.title}  {s.source.relative_to(root).as_posix()}")
         return 0
+    # The live state of the data, so docs never have to carry per-spec numbers.
+    data = root / DATA_DIR
     for s in specs:
         src = "ok" if s.source.is_file() else "MISSING"
         img = "-" if s.images is None else ("ok" if s.images.is_dir() else "MISSING")
+        vault = data / "vault" / s.code
+        notes = sum(1 for p in vault.glob(f"{s.code}-*.md")) if vault.is_dir() else 0
+        base = baseline_of(data, s.code) or "-"
         aka = f"  (aka {', '.join(s.aliases)})" if s.aliases else ""
-        print(f"{s.code:<5} {s.doc_no:<15} {s.date:<10} source:{src:<7} images:{img:<7} {s.title}{aka}")
+        print(f"{s.code:<5} {s.doc_no:<15} {s.date:<10} source:{src:<7} images:{img:<7} "
+              f"notes:{notes:<5} baseline:{base:<22} {s.title}{aka}")
     return 0
 
 
 def cmd_init_data(args: argparse.Namespace) -> int:
     for line in init_data(find_root(), migrate=args.migrate_legacy, git=not args.no_git):
         print(line)
+    return 0
+
+
+def cmd_add_spec(args: argparse.Namespace) -> int:
+    try:
+        for line in add_spec(find_root(), args.path, args.code, args.title, args.doc_no, args.date,
+                             args.alias, args.dry_run):
+            print(line)
+    except AddSpecError as e:
+        print(e, file=sys.stderr)
+        return 1
+    if not args.build or args.dry_run:
+        return 0
+    # The three checks Gate B asks of a new vault, in the order a person would run them.
+    steps = [
+        argparse.Namespace(codes=[args.code], max_tokens=args.max_tokens, force=False, dry_run=False,
+                           i_know_baseline_exists=False, func=cmd_build_vault),
+        argparse.Namespace(codes=[args.code], keep_ids=False, check=True, out_dir=None, func=cmd_export),
+        argparse.Namespace(codes=[args.code], fix_refs=False, json=False, limit=10, all=False,
+                           func=cmd_validate),
+    ]
+    for step in steps:
+        if step.func(step) != 0:
+            return 1
     return 0
 
 
@@ -224,14 +255,27 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("build-vault", help="Phase 1: data/sources/ → data/vault/ (split into notes, assign IDs, "
                                            "frontmatter, copy images; links are kept verbatim)")
-    p.add_argument("codes", nargs="*", help="spec codes to build (default: all in specs.yaml)")
+    p.add_argument("codes", nargs="*", help="spec codes to build (default: all in data/specs.yaml)")
     p.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS,
                    help=f"split threshold per note (D1, default {DEFAULT_MAX_TOKENS})")
     p.add_argument("--force", action="store_true", help="rebuild a vault directory that already exists")
     p.add_argument("--dry-run", action="store_true", help="report what would be written, write nothing")
     p.add_argument("--i-know-baseline-exists", action="store_true",
-                   help="build even though the baseline-original tag exists (this discards the baseline)")
+                   help="build a spec whose vault is already in a baseline tag (this discards that baseline)")
     p.set_defaults(func=cmd_build_vault)
+
+    p = sub.add_parser("add-spec", help="move a converted spec into data/sources/<CODE>/ and register it "
+                                        "in data/specs.yaml (doc_no, title, date from the file name)")
+    p.add_argument("path", type=Path, help="converter output: a folder with one .md and its images/, or a .md")
+    p.add_argument("--code", required=True, help="permanent section ID prefix, 2-5 capital letters, e.g. ADAS")
+    p.add_argument("--title", help="override the title taken from the file name")
+    p.add_argument("--doc-no", help="override the document number taken from the file name")
+    p.add_argument("--date", help="override the date taken from the file name (YYYY-MM-DD)")
+    p.add_argument("--alias", action="append", help="another name other specs use for it; repeatable")
+    p.add_argument("--build", action="store_true", help="then run build-vault, export --check and validate")
+    p.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS, help="split threshold for --build")
+    p.add_argument("--dry-run", action="store_true", help="report what would happen, change nothing")
+    p.set_defaults(func=cmd_add_spec)
 
     p = sub.add_parser("export", help="Phase 1: data/vault/ → build/export/<CODE>.md, following _manifest.yaml")
     p.add_argument("codes", nargs="*", help="spec codes to export (default: every spec that has a vault)")
@@ -285,7 +329,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-n", type=int, default=1, help="number of IDs to allocate")
     p.set_defaults(func=cmd_new_id)
 
-    p = sub.add_parser("specs", help="list specs.yaml and check that source files exist")
+    p = sub.add_parser("specs", help="list data/specs.yaml: source and images present, notes in the vault, "
+                                     "baseline tag")
     p.add_argument("--lookup", metavar="NAME",
                    help="which spec a name refers to (code, title or alias, e.g. 'LIN COMM'); exit 1 if not registered")
     p.set_defaults(func=cmd_specs)

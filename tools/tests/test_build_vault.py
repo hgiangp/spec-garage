@@ -5,6 +5,8 @@ numbers, caption anchors in their own span, an HTML table, an image with a long 
 width attribute, repeated heading titles and a heading with no number.
 """
 
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -30,13 +32,13 @@ def make_root(tmp_path: Path) -> Path:
     (sources / DEMO.name).write_text(DEMO.read_text(encoding="utf-8"), encoding="utf-8")
     (sources / "images").mkdir()
     (sources / "images" / "image1.png").write_bytes((DEMO.parent / "images" / "image1.png").read_bytes())
-    (root / "specs.yaml").write_text(
+    (root / "data" / "specs.yaml").write_text(
         "specs:\n"
         "  - code: DMD\n"
         "    doc_no: 9999ZXXXXD000\n"
         "    title: Demo Vault\n"
         "    date: 2026-01-01\n"
-        f"    source: data/sources/DMD/{DEMO.name}\n",
+        f"    source: sources/DMD/{DEMO.name}\n",
         encoding="utf-8",
     )
     return root
@@ -223,6 +225,43 @@ def test_dry_run_writes_nothing(tmp_path):
 def test_unknown_code_is_an_error(tmp_path):
     with pytest.raises(BuildError, match="no spec matches"):
         list(build_vault(make_root(tmp_path), ["NOPE"]))
+
+
+def git(data: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(data), "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                   check=True, capture_output=True)
+
+
+def with_second_spec(root: Path) -> None:
+    """Register a second spec (DMT), as if it arrived after the first baseline."""
+    src = root / "data" / "sources" / "DMT"
+    shutil.copytree(root / "data" / "sources" / "DMD", src)
+    reg = root / "data" / "specs.yaml"
+    reg.write_text(reg.read_text(encoding="utf-8")
+                   + f"  - code: DMT\n    title: Demo Two\n    source: sources/DMT/{DEMO.name}\n",
+                   encoding="utf-8")
+
+
+@pytest.mark.parametrize("tag", ["baseline-original", "baseline-original-DMD"])
+def test_baseline_freezes_only_the_specs_it_holds(tmp_path, tag):
+    root = make_root(tmp_path)
+    data = root / "data"
+    list(build_vault(root, max_tokens=20))
+    git(data, "init", "-q")
+    git(data, "add", "-A")
+    git(data, "commit", "-q", "-m", "baseline")
+    git(data, "tag", tag)
+
+    with pytest.raises(BuildError, match=f"already baselined: DMD \\({tag}\\)"):
+        list(build_vault(root, ["DMD"], max_tokens=20, force=True))
+    list(build_vault(root, ["DMD"], max_tokens=20, force=True, allow_baseline=True))  # the explicit override
+
+    with_second_spec(root)
+    lines = list(build_vault(root, ["DMT"], max_tokens=20))  # not in any baseline: allowed
+    assert (data / "vault" / "DMT" / "_manifest.yaml").is_file()
+    assert "tag -a baseline-original-DMT" in lines[-1]
+    with pytest.raises(BuildError, match="DMD"):
+        list(build_vault(root, max_tokens=20))  # "all specs" still includes the frozen one
 
 
 def test_cli_build_vault(tmp_path, monkeypatch, capsys):

@@ -1,0 +1,15 @@
+# Registry of spec files. `code` is the permanent prefix of every section ID (<CODE>-<NNNN>, see D2):
+# it never changes, even when a new revision of the spec arrives with a new date in its file name.
+#
+# Add a spec with `sg add-spec <folder> --code <CODE>` rather than by hand: it moves the source
+# into sources/<CODE>/ and fills in doc_no, lang, title and date from the file name.
+#
+# File name pattern: <doc_no>_<lang>_(<title>)_<yymmdd>
+#   source:  the Word→md output under sources/<CODE>/, with its original name. Paths are relative to data/.
+#   images:  optional; the image folder that came with the conversion. Image links are resolved
+#            relative to the source .md, so this is only used by `sg specs` as a sanity check.
+#   aliases: optional; other names other specs use for this one, e.g. in the "Source Function"
+#            column of a Reference data table or in `refer to SPEC"…"`. `sg specs --lookup` and
+#            `sg find --spec` match code, title and aliases, ignoring case, spaces, dots, slashes and quotes.
+
+specs:
