@@ -109,7 +109,8 @@ def test_save_load_roundtrip(tmp_path):
 
 
 def test_allocate_ids_persists_and_cli(tmp_path, monkeypatch, capsys):
-    (tmp_path / "specs.yaml").write_text("specs: []\n", encoding="utf-8")
+    (tmp_path / "data").mkdir(exist_ok=True)
+    (tmp_path / "data" / "specs.yaml").write_text("specs: []\n", encoding="utf-8")
     path = manifest_path(tmp_path, "WRN")
     save_manifest(Manifest(spec="WRN", next_id=5, tree=[Node("WRN-0001")]), path)
 

@@ -28,7 +28,8 @@ Cả hai repo đều nằm trên **GitLab nội bộ của công ty**. Không c�
 
 | Tiếng Việt (tạm thời) | Tiếng Anh (bắt buộc) |
 |---|---|
-| Tài liệu trong `docs/`, guide, `CLAUDE.md`, README, hướng dẫn trong `SKILL.md` | Code, comment, docstring, tên biến |
+| Tài liệu trong `docs/`, guide, `CLAUDE.md`, README | Code, comment, docstring, tên biến |
+| | Skill: `SKILL.md`, `references/` và mọi file đi kèm (skill cũ còn tiếng Việt sẽ chuyển dần) |
 | Trao đổi với người dùng | CLI help, log, message, thông báo lỗi |
 | | Commit message |
 | | Nội dung spec và mọi thứ ghi vào vault (requirement, bảng, `ASSUMPTION`, `question`, mô tả ảnh) |
@@ -41,10 +42,10 @@ Spec hiện tại là tiếng Anh. Mọi output mà agent ghi vào `data/` đề
 
 | Đường dẫn | Repo | Vai trò |
 |---|---|---|
-| `specs.yaml` | code | Registry: mã spec ↔ file nguồn |
 | `knowledge/` | code | Tri thức **chung**: style guide, quality checklist, templates section |
 | `.claude/skills/` | code | Skill improve (chỉ chứa quy trình) |
 | `tools/` | code | CLI `sg`. `tools/specgarage/data_template/` là khung cho `data/` |
+| `data/specs.yaml` | data | Registry: mã spec ↔ file nguồn (đường dẫn tương đối với `data/`). Thêm spec qua `sg add-spec` |
 | `data/sources/<CODE>/` | data | Spec gốc Word→md + ảnh. **Chỉ đọc** |
 | `data/vault/<CODE>/` | data | Vault: thư mục markdown, mỗi note là một section. Nguồn sự thật sau Phase 1. Mọi improve sửa ở đây. Obsidian chỉ là **một trình xem tuỳ chọn**, không phải thành phần của pipeline |
 | `data/vault/<CODE>/_manifest.yaml` | data | Cây section, thứ tự, `next_id`, `retired`. Chỉ sửa qua `sg` |
@@ -88,20 +89,25 @@ Chạy từ gốc repo:
 
 ```bash
 uv run --project tools sg init-data [--migrate-legacy]              # tạo data/ (git repo riêng)
-uv run --project tools sg specs                                     # kiểm tra registry và file nguồn
+uv run --project tools sg specs                                     # registry + trạng thái: source, ảnh, số note, tag baseline
+uv run --project tools sg add-spec "<thư mục .out>" --code ADAS [--alias …] [--dry-run|--build]  # T9: thêm spec (chỉ đổi data/)
 uv run --project tools sg profile --out data/reports/profile.txt    # Phase 0
 uv run --project tools sg profile --diagnose                         # giải thích anchor chưa resolve (không lộ chữ)
 uv run --project tools sg new-id WRN [-n 3]                         # cấp ID mới
-uv run --project tools sg build-vault [CODE…] [--dry-run|--force]   # T2: sources → vault (445 note)
+uv run --project tools sg build-vault [CODE…] [--dry-run|--force]   # T2: sources → vault; chặn spec đã có baseline
 uv run --project tools sg export [CODE…] --check                    # T5: vault → build/export/, so round-trip với source
 uv run --project tools sg validate [CODE…] [--fix-refs]             # T4: kiểm V01–V10, exit 1 nếu có error
 uv run --project tools sg get WRN-0342 [--no-frontmatter|--json]    # T3: nội dung section + file:dòng + breadcrumb
 uv run --project tools sg related WRN-0342 [--depth N|--json]       # T3: section link tới / được link từ
+uv run --project tools sg find "<term>" [--spec NAME] [--kind heading|table|text] [--json]  # thuật ngữ nằm ở section nào (tham chiếu chéo spec chỉ là chữ)
+uv run --project tools sg specs --lookup "LIN COMM"                 # tên (code/title/alias) → spec; exit 1 nếu chưa đăng ký
 uv run --project tools --group dev pytest tools/tests               # test tools
 ```
 
 Lệnh `relink` (T2b) đã có chỗ trong CLI nhưng chưa implement, làm sau Gate B. 
-**Ngưỡng tách note (D1, đã chốt): 3000 token** cho cả ba spec → 445 note, p90 ≈ 2.2k token.
+**Ngưỡng tách note (D1, đã chốt): 3000 token**, mặc định cho mọi spec. Mỗi vault ghi ngưỡng đã dùng trong `_manifest.yaml` (`max_tokens`).
+
+**Tài liệu không gắn với bộ spec hiện có.** Quy tắc, lệnh và guide viết cho `<CODE>` bất kỳ, ví dụ dùng mã giả lập của fixture. Số liệu từng spec (số note, baseline) lấy từ `sg specs`, không chép vào docs. Thêm spec không được đòi sửa file nào trong repo này.
 
 ## Definition of done (mọi commit/PR tính năng)
 
@@ -126,4 +132,7 @@ Commit chỉ có code thì **chưa xong**. Mỗi task phải kèm:
 **Repo `data/`:**
 - `main` luôn là bản đã được expert duyệt.
 - Mỗi lần improve là một branch `improve/<ID>-<mô-tả>`.
-- Tag `baseline-original` được gắn ngay sau lần build vault đầu tiên được duyệt. Đây là bản "before", không được viết lại. Sau tag này **không bao giờ chạy lại `build-vault`**; mọi cải thiện link là `sg relink` tại chỗ và phải áp lên cả baseline (tag mới, ví dụ `baseline-relinked-1`).
+- Mỗi spec có một tag baseline, gắn ngay sau lần build vault đầu tiên được duyệt. Đây là bản "before", không được viết lại.
+  - Các spec có từ Gate B dùng chung `baseline-original`. Spec thêm sau có tag riêng `baseline-original-<CODE>`.
+  - Spec đã có baseline thì **không bao giờ chạy lại `build-vault`** (lệnh tự chặn). Mọi cải thiện link là `sg relink` tại chỗ và phải áp lên cả baseline (tag mới, ví dụ `baseline-relinked-1`).
+- Thêm spec: branch `ingest/<CODE>-baseline`, commit `specs.yaml` + source + vault, gắn tag, expert duyệt rồi merge ([guide](docs/guides/add-spec.md)).

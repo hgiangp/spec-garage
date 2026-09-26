@@ -10,6 +10,7 @@
 
 | Skill | Làm gì | Có sửa spec không | Trạng thái | Cần |
 |---|---|---|---|---|
+| `spec-trace` | Lần mọi tham chiếu (anchor, reference data, SPEC dạng chữ, số mục, tên trần) tới chỗ định nghĩa, kể cả spec khác. Ghi reference map | Không (chỉ báo cáo) | ✅ Bản đầu, eval vòng 1. Xem [spec-trace](spec-trace.md) | `sg find`, `sg specs --lookup` |
 | `spec-analyze` | Báo lỗi chất lượng: mơ hồ, thiếu giá trị/đơn vị, gộp requirement, mâu thuẫn, ref gãy | Không (chỉ báo cáo) | ✅ **Dùng được ngay**, kể cả trên `data/sources/` trước khi có vault | |
 | `spec-restructure` | Sắp xếp lại theo template, mỗi requirement một dòng (EARS) | Có | Draft | T3 (`sg get/related`), T4 |
 | `spec-parameterize` | Rút giá trị cứng ra bảng parameter | Có | Draft | T3, T4 |
@@ -65,6 +66,10 @@ skill đề xuất → branch improve/<ID>-… trong data/ → expert xem git di
 ```
 
 Cải tiến **quy trình** của skill (không chứa nội dung domain) thì gửi về máy phát triển để sửa `SKILL.md`.
+
+## Ngôn ngữ
+
+Skill (`SKILL.md`, `references/`, template, eval) viết bằng **tiếng Anh**. Chỉ guide trong `docs/` viết tiếng Việt. Các skill cũ còn phần tiếng Việt sẽ chuyển dần khi được sửa.
 
 ## Giới hạn đã biết
 

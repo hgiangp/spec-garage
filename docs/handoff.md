@@ -27,10 +27,11 @@
 | T3 `get`/`related` | ✅ branch `phase1/t3-get-related`, [guide](guides/get-related.md) |
 | V1 (build + export --check + validate trên 3 spec thật) | ✅ 2026-09-24 |
 | V2 (expert xem note), V3 (tag `baseline-original`) | ✅ 2026-09-24, `data/` commit `8e0bba9`. **Gate B đạt** |
+| T9 thêm spec không sửa repo code (`data/specs.yaml`, `sg add-spec`, baseline theo từng spec) | ✅ branch `phase1/t9-spec-independent`, [guide](guides/add-spec.md) |
 | **Việc tiếp theo** | **Gate C / Phase 2** (S1–S6) trên máy dữ liệu. T2b `relink` khi cần link bấm được |
 | T2b `relink` | ⏳ sau Gate B |
 
-`data/`: branch `main`, đã push lên GitLab. Tag **`baseline-original`** ở commit `8e0bba9` (bản "before"). Từ đây **không bao giờ chạy lại `build-vault`**; `sg build-vault` sẽ tự từ chối.
+`data/`: branch `main`, đã push lên GitLab. Tag **`baseline-original`** ở commit `8e0bba9` (bản "before" của các spec có từ Gate B). Spec thêm sau có tag riêng `baseline-original-<CODE>`. Spec đã có baseline thì **không bao giờ chạy lại `build-vault`**; `sg build-vault` sẽ tự từ chối. Danh sách spec, số note và tag của từng spec: `sg specs` (không chép vào docs).
 
 ## 3. Quy trình convert (đã xác nhận với chủ repo)
 

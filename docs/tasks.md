@@ -68,6 +68,7 @@ Commit chỉ có code, không kèm các mục trên, thì chưa được coi là
 | T4  | `sg validate` (V01–V10) | ✅ | 💻 | `phase1/t4-validate` | [validate](guides/validate.md) | Vault vừa build ra 0 finding trên fixture. **Chạy trên 3 spec thật ở V1** |
 | T3  | `sg get`, `sg related` | ✅ | 💻 | `phase1/t3-get-related` | [get-related](guides/get-related.md) | Kèm `vault.py` (chỉ mục section, dùng chung với validate). Skill draft giờ đã có đủ lệnh `sg` |
 | T7  | Mở rộng fixture và test                                                         | 🔄           | 🗄️      |                                           |                                                                                               | Làm dần theo từng ticket                                                   |
+| T9  | Thêm spec không sửa repo code: registry sang `data/specs.yaml`, `sg add-spec`, baseline theo từng spec, `sg specs` in số note + tag | ✅ | 💻 | `phase1/t9-spec-independent` (xếp trên `phase2/s6-find-near-miss`) | [add-spec](guides/add-spec.md) | Docs chỉ còn quy tắc, không chép số liệu từng spec. Chuẩn hoá tên spec bỏ qua cả `/`. Chạy thật: ADAS AD (V4) |
 | T2b | `sg relink`: viết lại link sang `[text](<ID>.md)`, tại chỗ                 | ⏳           | 🗄️      |                                           | [next-steps §3 T2b](next-steps.md#t2b-relinkpy-sg-relink-code---dry-run---report--sau-gate-b) | **Sau Gate B.** Phải áp lên cả baseline, gắn tag mới              |
 | T8  | ~~Tạo PR `phase0/p05-anchor-resolution` → `main`~~                          | ✅           | 💻        |                                           |                                                                                               | Không còn cần:`main` đã chứa toàn bộ commit đó                    |
 
@@ -104,7 +105,8 @@ Nối note lại theo manifest ra **đúng** văn bản gốc trên cả ba spec
 | -- | ------------------------------------------------------------------------------- | ------------ | ------------- | ------------------------------------------------------------------------------------- |
 | V1 | `sg build-vault && sg export --check && sg validate` trên 3 spec | ✅ | 🗄️ | Round-trip OK và validate xong trên cả ba spec (2026-09-24) |
 | V2 | Expert kiểm tra khoảng 10 note mỗi spec (VS Code, GitLab web hoặc Obsidian) | ✅ | 🗄️ + expert | Ranh giới note, bảng, ảnh, frontmatter, dòng id (2026-09-24). Link chưa kiểm: thuộc Gate D |
-| V3 | Tag `baseline-original` trong repo `data/` | ✅ | 🗄️ | `data/` commit `8e0bba9`. **Gate B đạt**: từ đây không chạy lại `build-vault` |
+| V3 | Tag `baseline-original` trong repo `data/` | ✅ | 🗄️ | `data/` commit `8e0bba9`. **Gate B đạt**: từ đây không chạy lại `build-vault` cho các spec trong tag này |
+| V4 | Thêm spec ADAS AD (mã `ADAS`) | 🔄 | 🗄️ + expert | Build, round-trip OK, validate 0 lỗi, tag `baseline-original-ADAS` (`data/` commit `d08ee11`, branch `ingest/ADAS-baseline`). Còn: expert xem ~10 note, rồi merge vào `main` của `data/` |
 
 ## Phase 2: thí điểm improve
 
@@ -115,6 +117,7 @@ Nối note lại theo manifest ra **đúng** văn bản gốc trên cả ba spec
 | S3 | `spec-restructure`, `spec-parameterize` trên 1–2 section     | ⏳           | 🗄️          | Cần T3                                                                                         |
 | S4 | Vòng review →`lessons.md`, `glossary.md`                     | ⏳           | 🗄️ + expert |                                                                                                 |
 | S5 | Eval case 10–20 section                                           | ⏳           | 🗄️          |                                                                                                 |
+| S6a | Skill `spec-trace` + `sg find`, `sg specs --lookup`, `aliases` trong registry | ✅ bản đầu | 🗄️ | Branch `phase2/s6-spec-trace`. Eval vòng 1: 3 lượt chạy xong (có skill 17/17 assertion; baseline 9/10 trên case 1); 3 lượt dừng vì hết hạn mức API, cần chạy lại. Xem [spec-trace](guides/spec-trace.md). Bổ sung (branch `phase2/s6-find-near-miss`): `sg find` 0 hit thì gợi ý tên dài hơn ra stderr (`R_SCROLL` → `R_SCROLL_UP`…), JSON thêm `matches` |
 | S6 | Hoàn thiện 4 skill draft                                         | ⏳           | 💻            | Chỉ cải tiến quy trình, không đưa nội dung domain                                       |
 
 ## Câu hỏi mở

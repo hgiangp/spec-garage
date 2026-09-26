@@ -15,6 +15,7 @@ Chỉ **báo cáo**.
 2. **Lấy dữ liệu:**
    - `sg get <ID>`
    - `sg related <ID>`: cả chiều ra (section này refer tới) và chiều vào (section khác refer tới nó), kể cả spec khác.
+   - Cross-spec references are plain text: use the reference map `data/reports/trace/<ID>.md` (run the `spec-trace` skill first if it does not exist) and `sg find "<term>"`.
 3. **Rút "fact" có thể so sánh** từ mỗi section: tên signal, giá trị, đơn vị, trạng thái, điều kiện, timing.
 4. **So khớp theo từng fact:**
    - Cùng signal nhưng khác giá trị, khác đơn vị hoặc khác ý nghĩa.
@@ -25,5 +26,5 @@ Chỉ **báo cáo**.
 
 ## Quy tắc
 - **Không kết luận bên nào đúng.** Nêu mâu thuẫn và hỏi expert.
-- Nếu phát hiện spec được refer nhưng không có trong `specs.yaml`, ghi vào mục "Out-of-scope specs".
+- Nếu phát hiện spec được refer nhưng không có trong `data/specs.yaml`, ghi vào mục "Out-of-scope specs".
 - **Ngôn ngữ output:** report và mọi nội dung ghi vào spec/vault viết bằng **tiếng Anh**.

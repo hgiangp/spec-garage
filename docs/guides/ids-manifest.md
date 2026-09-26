@@ -26,7 +26,7 @@ Module này **không** tạo note. Việc đó là của `build-vault` (T2). T2 
 
 | Quy tắc | Chi tiết |
 |---|---|
-| Format | `<CODE>-<NNNN>`. `CODE` gồm 2–5 chữ in hoa, lấy từ `specs.yaml` |
+| Format | `<CODE>-<NNNN>`. `CODE` gồm 2–5 chữ in hoa, lấy từ `data/specs.yaml` |
 | Độ rộng số | `id_width` trong manifest: 4 chữ số, hoặc 5 nếu spec có ≥ 10 000 heading. **Cố định cho cả spec.** Vượt quá thì báo lỗi, không tự đổi |
 | Cấp phát | Luôn là `next_id`, tăng dần. Không chèn số vào giữa |
 | Không mang ý nghĩa | Không mã hoá số heading hay cấp bậc. Số heading gốc nằm ở `legacy_number` |

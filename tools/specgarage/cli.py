@@ -8,9 +8,11 @@ import sys
 from pathlib import Path
 
 from . import profile
-from .build_vault import DEFAULT_MAX_TOKENS, BuildError, build_vault
-from .config import DATA_DIR, find_root, load_specs
+from .add_spec import AddSpecError, add_spec
+from .build_vault import DEFAULT_MAX_TOKENS, BuildError, baseline_of, build_vault
+from .config import DATA_DIR, find_root, load_specs, lookup_spec
 from .export import ExportError, export_vault
+from .find import find as find_term, near_misses as find_near_misses, to_dicts as find_to_dicts
 from .ids import IdError, allocate_ids
 from .init_data import init_data
 from .section import get as get_section, related as related_sections
@@ -21,6 +23,7 @@ from .notes import SplitError
 PLANNED = {
     "relink": "Phase 1: rewrite in-vault links to markdown links pointing at note IDs, in place (run after build-vault)",
 }
+NEAR_MISSES = 5  # longer names listed when a whole-word `find` has no hits
 
 
 def cmd_profile(args: argparse.Namespace) -> int:
@@ -39,16 +42,54 @@ def cmd_profile(args: argparse.Namespace) -> int:
 def cmd_specs(args: argparse.Namespace) -> int:
     root = find_root()
     specs = load_specs(root)
+    if args.lookup is not None:
+        s = lookup_spec(specs, args.lookup)
+        if s is None:
+            print(f"{args.lookup!r} is not in {DATA_DIR}/specs.yaml (code, title or aliases)", file=sys.stderr)
+            return 1
+        print(f"{s.code}  {s.title}  {s.source.relative_to(root).as_posix()}")
+        return 0
+    # The live state of the data, so docs never have to carry per-spec numbers.
+    data = root / DATA_DIR
     for s in specs:
         src = "ok" if s.source.is_file() else "MISSING"
         img = "-" if s.images is None else ("ok" if s.images.is_dir() else "MISSING")
-        print(f"{s.code:<5} {s.doc_no:<15} {s.date:<10} source:{src:<7} images:{img:<7} {s.title}")
+        vault = data / "vault" / s.code
+        notes = sum(1 for p in vault.glob(f"{s.code}-*.md")) if vault.is_dir() else 0
+        base = baseline_of(data, s.code) or "-"
+        aka = f"  (aka {', '.join(s.aliases)})" if s.aliases else ""
+        print(f"{s.code:<5} {s.doc_no:<15} {s.date:<10} source:{src:<7} images:{img:<7} "
+              f"notes:{notes:<5} baseline:{base:<22} {s.title}{aka}")
     return 0
 
 
 def cmd_init_data(args: argparse.Namespace) -> int:
     for line in init_data(find_root(), migrate=args.migrate_legacy, git=not args.no_git):
         print(line)
+    return 0
+
+
+def cmd_add_spec(args: argparse.Namespace) -> int:
+    try:
+        for line in add_spec(find_root(), args.path, args.code, args.title, args.doc_no, args.date,
+                             args.alias, args.dry_run):
+            print(line)
+    except AddSpecError as e:
+        print(e, file=sys.stderr)
+        return 1
+    if not args.build or args.dry_run:
+        return 0
+    # The three checks Gate B asks of a new vault, in the order a person would run them.
+    steps = [
+        argparse.Namespace(codes=[args.code], max_tokens=args.max_tokens, force=False, dry_run=False,
+                           i_know_baseline_exists=False, func=cmd_build_vault),
+        argparse.Namespace(codes=[args.code], keep_ids=False, check=True, out_dir=None, func=cmd_export),
+        argparse.Namespace(codes=[args.code], fix_refs=False, json=False, limit=10, all=False,
+                           func=cmd_validate),
+    ]
+    for step in steps:
+        if step.func(step) != 0:
+            return 1
     return 0
 
 
@@ -151,6 +192,33 @@ def cmd_related(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_find(args: argparse.Namespace) -> int:
+    try:
+        hits = find_term(find_root(), args.term, args.spec, args.kind, args.case_sensitive,
+                         not args.substring, args.include_preamble)
+    except VaultError as e:
+        print(e, file=sys.stderr)
+        return 1
+    if not hits and not args.substring:
+        near = find_near_misses(find_root(), args.term, args.spec, args.kind, args.case_sensitive,
+                                args.include_preamble)
+        if near:
+            names = ", ".join(f"{name} ({n})" for name, n in near.most_common(NEAR_MISSES))
+            more = f", … {len(near) - NEAR_MISSES} more" if len(near) > NEAR_MISSES else ""
+            print(f"no whole-word match; --substring finds it inside: {names}{more}", file=sys.stderr)
+    if args.json:
+        print(json.dumps(find_to_dicts(hits), ensure_ascii=False, indent=2))
+        return 0 if hits else 1
+    for h in hits[:None if args.all else args.limit]:
+        inside = f" (in {h.note})" if h.note != h.id else ""
+        print(f"{h.id}{inside}  {h.kind:<7}  {h.path}:{h.line}  {' > '.join(h.breadcrumb)}")
+        print(f"    {h.snippet}")
+    if not args.all and len(hits) > args.limit:
+        print(f"… {len(hits) - args.limit} more (use --all)")
+    print(f"{len(hits)} hit(s) in {len({h.id for h in hits})} section(s)")
+    return 0 if hits else 1
+
+
 def cmd_new_id(args: argparse.Namespace) -> int:
     try:
         ids = allocate_ids(find_root(), args.code, args.n)
@@ -187,14 +255,27 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("build-vault", help="Phase 1: data/sources/ → data/vault/ (split into notes, assign IDs, "
                                            "frontmatter, copy images; links are kept verbatim)")
-    p.add_argument("codes", nargs="*", help="spec codes to build (default: all in specs.yaml)")
+    p.add_argument("codes", nargs="*", help="spec codes to build (default: all in data/specs.yaml)")
     p.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS,
                    help=f"split threshold per note (D1, default {DEFAULT_MAX_TOKENS})")
     p.add_argument("--force", action="store_true", help="rebuild a vault directory that already exists")
     p.add_argument("--dry-run", action="store_true", help="report what would be written, write nothing")
     p.add_argument("--i-know-baseline-exists", action="store_true",
-                   help="build even though the baseline-original tag exists (this discards the baseline)")
+                   help="build a spec whose vault is already in a baseline tag (this discards that baseline)")
     p.set_defaults(func=cmd_build_vault)
+
+    p = sub.add_parser("add-spec", help="move a converted spec into data/sources/<CODE>/ and register it "
+                                        "in data/specs.yaml (doc_no, title, date from the file name)")
+    p.add_argument("path", type=Path, help="converter output: a folder with one .md and its images/, or a .md")
+    p.add_argument("--code", required=True, help="permanent section ID prefix, 2-5 capital letters, e.g. ADAS")
+    p.add_argument("--title", help="override the title taken from the file name")
+    p.add_argument("--doc-no", help="override the document number taken from the file name")
+    p.add_argument("--date", help="override the date taken from the file name (YYYY-MM-DD)")
+    p.add_argument("--alias", action="append", help="another name other specs use for it; repeatable")
+    p.add_argument("--build", action="store_true", help="then run build-vault, export --check and validate")
+    p.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS, help="split threshold for --build")
+    p.add_argument("--dry-run", action="store_true", help="report what would happen, change nothing")
+    p.set_defaults(func=cmd_add_spec)
 
     p = sub.add_parser("export", help="Phase 1: data/vault/ → build/export/<CODE>.md, following _manifest.yaml")
     p.add_argument("codes", nargs="*", help="spec codes to export (default: every spec that has a vault)")
@@ -226,12 +307,32 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--json", action="store_true", help="output JSON")
     p.set_defaults(func=cmd_related)
 
+    p = sub.add_parser("find", help="sections where a term (signal, data name, parameter) appears, "
+                                    "as heading, table or text; exit 1 if none")
+    p.add_argument("term", help='text to look for, e.g. "FOO operation" (whole word, any case)')
+    p.add_argument("--spec", action="append",
+                   help="spec to search, by code, title or alias (e.g. LIN, 'LIN COMM'); repeatable. Default: all")
+    p.add_argument("--kind", action="append", choices=["heading", "table", "text"],
+                   help="only hits of this kind; repeatable")
+    p.add_argument("--case-sensitive", action="store_true", help="match case exactly")
+    p.add_argument("--substring", action="store_true",
+                   help="match inside words too (by default 'FOO operation' does not match 'XFOO operation', "
+                        "nor 'R_FOO' 'R_FOO_UP'; with no whole-word hit, stderr lists such longer names)")
+    p.add_argument("--include-preamble", action="store_true", help="search the preamble (table of contents) too")
+    p.add_argument("--limit", type=int, default=30, help="hits shown (default 30)")
+    p.add_argument("--all", action="store_true", help="show every hit")
+    p.add_argument("--json", action="store_true", help="output JSON")
+    p.set_defaults(func=cmd_find)
+
     p = sub.add_parser("new-id", help="allocate new section IDs from next_id in data/vault/<CODE>/_manifest.yaml")
     p.add_argument("code", help="spec code, e.g. WRN")
     p.add_argument("-n", type=int, default=1, help="number of IDs to allocate")
     p.set_defaults(func=cmd_new_id)
 
-    p = sub.add_parser("specs", help="list specs.yaml and check that source files exist")
+    p = sub.add_parser("specs", help="list data/specs.yaml: source and images present, notes in the vault, "
+                                     "baseline tag")
+    p.add_argument("--lookup", metavar="NAME",
+                   help="which spec a name refers to (code, title or alias, e.g. 'LIN COMM'); exit 1 if not registered")
     p.set_defaults(func=cmd_specs)
 
     for name, desc in PLANNED.items():
@@ -242,7 +343,15 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def use_utf8_output() -> None:
+    """Spec text is full of non-ASCII (→, ‑, “”); a Windows cp1252 console would crash on print."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure") and (stream.encoding or "").lower().replace("-", "") != "utf8":
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    use_utf8_output()
     args = build_parser().parse_args(argv)
     return args.func(args)
 

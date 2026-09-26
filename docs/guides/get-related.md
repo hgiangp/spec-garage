@@ -85,7 +85,7 @@ linked from (1):
 
 ## Giới hạn đã biết
 
-- **Chỉ trong một spec.** Không có link giữa các spec (tham chiếu chéo spec chỉ ở dạng chữ, xem `handoff.md` §3). `spec-consistency` phải tự tìm theo chữ.
+- **Chỉ trong một spec.** Không có link giữa các spec (tham chiếu chéo spec chỉ ở dạng chữ, xem `handoff.md` §3). Tìm theo chữ bằng `sg find` và skill `spec-trace` (xem [spec-trace](spec-trace.md)).
 - **Tiêu đề** in ra là tiêu đề heading gốc, kể cả số (ví dụ `1.1. Overview`), không phải `title` trong frontmatter.
 - **Mỗi lần gọi, cả vault của spec được đọc lại** (WRN khoảng 250 note). Với một lần gọi thì chấp nhận được. Nếu skill gọi hàng trăm lần liên tiếp thì nên dùng `--json` và gom yêu cầu lại.
 - **Heading con thiếu dòng `<!-- id -->`** thì không có section riêng: nó bị tính vào section cha. `sg validate` (V05) sẽ báo.
